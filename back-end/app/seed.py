@@ -8,6 +8,7 @@ from app.core.logging import setup_logging, logger
 from app.modules.auth.models import User, UserRole
 from app.modules.accounting.models import Account, AccountClassification
 from app.modules.founders.models import Founder
+import app.modules.printing_3d.models
 
 DEFAULT_PASSWORD = "Password123!"  # In production, forced to change on first login
 

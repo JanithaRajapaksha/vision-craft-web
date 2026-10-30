@@ -13,6 +13,7 @@ from app.core.database import Base
 import app.modules.auth.models
 import app.modules.accounting.models
 import app.modules.founders.models
+import app.modules.printing_3d.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

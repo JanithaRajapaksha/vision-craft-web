@@ -8,6 +8,7 @@ from app.core.exceptions import DomainException
 from app.modules.auth.router import router as auth_router
 from app.modules.accounting.router import router as accounting_router
 from app.modules.founders.router import router as founders_router
+from app.modules.printing_3d.router import router as printing_3d_router
 
 # Setup structured logging
 setup_logging()
@@ -56,4 +57,5 @@ async def health_check():
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(accounting_router, prefix="/api/v1")
 app.include_router(founders_router, prefix="/api/v1")
+app.include_router(printing_3d_router, prefix="/api/v1")
 
