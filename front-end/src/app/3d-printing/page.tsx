@@ -281,9 +281,44 @@ export default function SlicingStudioPage() {
             </div>
           )}
 
-          {/* Slicing Studio Main Layout: Left Panel (Controls & Telemetry) + Right Panel (Full Vertical 3D Viewer) */}
+          {/* Slicing Studio Main Layout: Left Panel (Interactive 3D WebGL Studio) + Right Panel (Controls & Telemetry) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Left Panel: Upload, Slicing Parameters & Results (5 cols on lg, 4 cols on xl) */}
+            {/* Left Panel: Interactive 3D WebGL Studio taking full vertical space (7 cols on lg, 8 cols on xl) */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col min-h-[620px] lg:min-h-[760px]">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-md flex-1 flex flex-col overflow-hidden">
+                {/* 3D Viewport Header Bar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-slate-700/60 text-slate-200">
+                  <div className="flex items-center space-x-2">
+                    <Eye className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                      Interactive 3D WebGL Model Studio
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-medium">
+                    {selectedFile ? (
+                      <span className="text-emerald-400 font-semibold truncate max-w-xs">
+                        {selectedFile.name}
+                      </span>
+                    ) : previewUrl ? (
+                      <span className="text-blue-400 font-semibold">Calibration Cube (20mm)</span>
+                    ) : (
+                      <span>Virtual 220×220mm FDM Bed</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Vertical Full-Height 3D Viewport */}
+                <div className="flex-1 relative w-full h-full min-h-[560px]">
+                  <STLViewer
+                    file={selectedFile}
+                    modelUrl={previewUrl}
+                    className="w-full h-full absolute inset-0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel: Upload, Slicing Parameters & Results (5 cols on lg, 4 cols on xl) */}
             <div className="lg:col-span-5 xl:col-span-4 flex flex-col space-y-5">
               {/* Parameters & Upload Form Card */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
@@ -523,45 +558,10 @@ export default function SlicingStudioPage() {
                     <Layers className="w-8 h-8 text-slate-300 mb-1.5" />
                     <span className="font-bold text-xs text-slate-700">No Model Sliced Yet</span>
                     <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
-                      Choose an .stl model on the left or use 1-Click Test to extract telemetry and calculate price at 25 LKR/g.
+                      Choose an .stl model on the right or use 1-Click Test to extract telemetry and calculate price at 25 LKR/g.
                     </p>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Right Panel: Interactive 3D WebGL Studio taking full vertical space (7 cols on lg, 8 cols on xl) */}
-            <div className="lg:col-span-7 xl:col-span-8 flex flex-col min-h-[620px] lg:min-h-[760px]">
-              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-md flex-1 flex flex-col overflow-hidden">
-                {/* 3D Viewport Header Bar */}
-                <div className="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-slate-700/60 text-slate-200">
-                  <div className="flex items-center space-x-2">
-                    <Eye className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
-                      Interactive 3D WebGL Model Studio
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-medium">
-                    {selectedFile ? (
-                      <span className="text-emerald-400 font-semibold truncate max-w-xs">
-                        {selectedFile.name}
-                      </span>
-                    ) : previewUrl ? (
-                      <span className="text-blue-400 font-semibold">Calibration Cube (20mm)</span>
-                    ) : (
-                      <span>Virtual 220×220mm FDM Bed</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vertical Full-Height 3D Viewport */}
-                <div className="flex-1 relative w-full h-full min-h-[560px]">
-                  <STLViewer
-                    file={selectedFile}
-                    modelUrl={previewUrl}
-                    className="w-full h-full absolute inset-0"
-                  />
-                </div>
               </div>
             </div>
           </div>
