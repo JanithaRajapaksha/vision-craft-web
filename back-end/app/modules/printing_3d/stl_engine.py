@@ -84,6 +84,39 @@ class STLEngine:
         dim_y = max(0.0, max_y - min_y)
         dim_z = max(0.0, max_z - min_z)
 
+        # Automatic FDM Overhang & Support Detection
+        # Downward facets steeper than 45° (nz < -0.25) elevated above the print bed require scaffolding
+        support_volume_mm3 = 0.0
+        overhang_facets = 0
+        offset = 84
+        for _ in range(triangle_count):
+            if offset + 50 > len(file_bytes):
+                break
+            x1, y1, z1 = struct.unpack("<3f", file_bytes[offset+12:offset+24])
+            x2, y2, z2 = struct.unpack("<3f", file_bytes[offset+24:offset+36])
+            x3, y3, z3 = struct.unpack("<3f", file_bytes[offset+36:offset+48])
+            offset += 50
+
+            ax, ay, az = x2 - x1, y2 - y1, z2 - z1
+            bx, by, bz = x3 - x1, y3 - y1, z3 - z1
+            cx = ay * bz - az * by
+            cy = az * bx - ax * bz
+            cz = ax * by - ay * bx
+            length = math.sqrt(cx * cx + cy * cy + cz * cz)
+
+            if length > 1e-6:
+                nz = cz / length
+                z_avg = (z1 + z2 + z3) / 3.0
+                if nz < -0.25 and z_avg > (min_z + 0.6):
+                    overhang_facets += 1
+                    a_xy = 0.5 * abs(cz)
+                    h_column = z_avg - min_z
+                    # FDM sparse support density: 15% infill + interface layers
+                    support_volume_mm3 += a_xy * h_column * 0.15
+
+        support_volume_cm3 = support_volume_mm3 / 1000.0
+        has_supports = support_volume_cm3 > 0.02
+
         return {
             "triangle_count": triangle_count,
             "dim_x_mm": round(dim_x, 2),
@@ -91,6 +124,9 @@ class STLEngine:
             "dim_z_mm": round(dim_z, 2),
             "volume_cm3": round(volume_cm3, 3),
             "surface_area_cm2": round(surface_area_cm2, 2),
+            "support_volume_cm3": round(support_volume_cm3, 3),
+            "has_supports": has_supports,
+            "overhang_facets": overhang_facets,
         }
 
     @staticmethod
@@ -138,6 +174,36 @@ class STLEngine:
         volume_cm3 = abs(total_volume_mm3) / 1000.0
         surface_area_cm2 = total_area_mm2 / 100.0
 
+        # Automatic Overhang calculation for ASCII
+        support_volume_mm3 = 0.0
+        overhang_facets = 0
+        current_tri = []
+        for line in lines:
+            line_str = line.strip().lower()
+            if line_str.startswith("vertex"):
+                parts = line_str.split()
+                if len(parts) >= 4:
+                    current_tri.append((float(parts[1]), float(parts[2]), float(parts[3])))
+            elif line_str.startswith("endfacet"):
+                if len(current_tri) == 3:
+                    (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = current_tri
+                    ax, ay, az = x2 - x1, y2 - y1, z2 - z1
+                    bx, by, bz = x3 - x1, y3 - y1, z3 - z1
+                    cx, cy, cz = ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx
+                    length = math.sqrt(cx * cx + cy * cy + cz * cz)
+                    if length > 1e-6:
+                        nz = cz / length
+                        z_avg = (z1 + z2 + z3) / 3.0
+                        if nz < -0.25 and z_avg > (min_z + 0.6):
+                            overhang_facets += 1
+                            a_xy = 0.5 * abs(cz)
+                            h_column = z_avg - min_z
+                            support_volume_mm3 += a_xy * h_column * 0.15
+                current_tri = []
+
+        support_volume_cm3 = support_volume_mm3 / 1000.0
+        has_supports = support_volume_cm3 > 0.02
+
         return {
             "triangle_count": triangle_count,
             "dim_x_mm": round(max_x - min_x, 2) if triangle_count > 0 else 0.0,
@@ -145,6 +211,9 @@ class STLEngine:
             "dim_z_mm": round(max_z - min_z, 2) if triangle_count > 0 else 0.0,
             "volume_cm3": round(volume_cm3, 3),
             "surface_area_cm2": round(surface_area_cm2, 2),
+            "support_volume_cm3": round(support_volume_cm3, 3),
+            "has_supports": has_supports,
+            "overhang_facets": overhang_facets,
         }
 
     @staticmethod
@@ -153,12 +222,13 @@ class STLEngine:
         layer_height_mm: float = 0.20,
         infill_percentage: int = 20,
         material: str = "PLA+",
-        support_enabled: bool = False,
+        support_enabled: bool = True,
     ) -> Dict[str, Any]:
         """
         Simulate industrial FDM slicing parameters for VisionCraft:
         - Material: PLA+ (1.24 g/cm³)
         - Layer Heights: Only 0.2mm (Standard) or 0.1mm (Fine Detail)
+        - Automatically detects and calculates required support structures without manual toggles.
         """
         # Constrain layer height to 0.2mm or 0.1mm
         lh = 0.10 if abs(float(layer_height_mm) - 0.10) < 0.05 else 0.20
@@ -181,29 +251,25 @@ class STLEngine:
         infill_factor = max(0.05, min(1.0, infill_percentage / 100.0))
         infill_volume_cm3 = core_volume_cm3 * infill_factor
 
-        # Support allowance if enabled
-        support_volume_cm3 = (volume_cm3 * 0.12) if support_enabled else 0.0
+        # Automatic Support calculation directly from mesh overhangs
+        auto_support_cm3 = mesh_meta.get("support_volume_cm3", 0.0)
+        has_supports = mesh_meta.get("has_supports", auto_support_cm3 > 0.02)
+        support_grams = round(auto_support_cm3 * density, 2)
 
         # Total printed plastic volume in cm3 (includes 4% purge/skin overlap)
-        total_plastic_cm3 = (shell_volume_cm3 + infill_volume_cm3 + support_volume_cm3) * 1.04
+        total_plastic_cm3 = (shell_volume_cm3 + infill_volume_cm3 + auto_support_cm3) * 1.04
 
-        # Total mass in grams
+        # Total mass in grams (Model + Auto-calculated Supports)
         filament_grams = round(total_plastic_cm3 * density, 2)
-        # Ensure minimum 1.0g for tiny prints
         filament_grams = max(1.0, filament_grams)
 
         # Filament length (1.75mm diameter filament: cross-section area = pi * (1.75/2)^2 = 2.405 mm2)
         filament_length_mm = round((total_plastic_cm3 * 1000.0) / 2.405, 1)
 
         # Print Duration Estimation based on FDM kinematics:
-        # Volumetric extrusion speed: ~8 to 11 mm3 / sec for standard FDM
         volumetric_flow_rate = 9.5  # mm3/s
         extrusion_time_sec = (total_plastic_cm3 * 1000.0) / volumetric_flow_rate
-
-        # Travel & Z-hop overhead: ~0.45s per layer
         layer_travel_sec = layer_count * 0.45
-
-        # Bed heating & nozzle stabilization: 150 seconds
         heating_sec = 150.0
 
         total_duration_sec = int(extrusion_time_sec + layer_travel_sec + heating_sec)
@@ -217,6 +283,9 @@ class STLEngine:
             "filament_length_mm": Decimal(str(filament_length_mm)),
             "estimated_duration_seconds": total_duration_sec,
             "plastic_volume_cm3": round(total_plastic_cm3, 3),
+            "support_volume_cm3": round(auto_support_cm3, 3),
+            "support_grams": Decimal(str(support_grams)),
+            "has_supports": has_supports,
         }
 
     @staticmethod

@@ -311,7 +311,7 @@ export function STLViewer({
           type="button"
           onClick={() => setWireframe(!wireframe)}
           title="Toggle Wireframe"
-          className={`p-1.5 rounded hover:bg-slate-700 transition-colors ${
+          className={`p-1.5 rounded hover:bg-slate-700 transition-colors cursor-pointer ${
             wireframe ? "text-blue-400 bg-slate-700 font-bold" : "text-slate-300"
           }`}
         >
@@ -321,7 +321,7 @@ export function STLViewer({
           type="button"
           onClick={handleResetCamera}
           title="Reset View"
-          className="p-1.5 rounded hover:bg-slate-700 text-slate-300 transition-colors"
+          className="p-1.5 rounded hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
         >
           <RotateCcw className="w-4 h-4" />
         </button>

@@ -79,6 +79,8 @@ services:
     build:
       context: ./front-end
       dockerfile: Dockerfile
+      args:
+        - BACKEND_URL=http://backend:8000
     container_name: visioncraft_frontend
     restart: unless-stopped
     environment:

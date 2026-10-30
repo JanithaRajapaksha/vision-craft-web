@@ -21,7 +21,10 @@ class SliceEstimateResponse(BaseModel):
     layer_height_mm: Decimal
     infill_percentage: int
     material: str
-    support_enabled: bool
+    support_enabled: bool = True
+    has_supports: bool = False
+    support_grams: Decimal = Decimal("0.00")
+    support_volume_cm3: Decimal = Decimal("0.00")
     
     # Telemetry
     filament_used_grams: Decimal
