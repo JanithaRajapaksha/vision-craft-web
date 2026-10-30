@@ -1,5 +1,5 @@
 # ==============================================================================
-# Workshop OS – Backend Production Multi-Stage Dockerfile
+# VisionCraft OS – Backend Production Multi-Stage Dockerfile
 # ==============================================================================
 FROM python:3.10-slim AS base
 

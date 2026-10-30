@@ -1,5 +1,5 @@
 # ==============================================================================
-# Workshop OS – Frontend Production Multi-Stage Dockerfile
+# VisionCraft OS – Frontend Production Multi-Stage Dockerfile
 # ==============================================================================
 FROM node:20-alpine AS builder
 
