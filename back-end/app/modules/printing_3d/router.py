@@ -30,7 +30,7 @@ async def upload_and_slice_stl(
     file: UploadFile = File(...),
     layer_height: float = Form(0.20),
     infill_percentage: int = Form(20),
-    material: str = Form("PLA"),
+    material: str = Form("PLA+"),
     support_enabled: bool = Form(False),
     rate_per_gram: float = Form(28.0),
     db: Annotated[AsyncSession, Depends(get_db)] = None,
@@ -167,7 +167,7 @@ async def generate_and_slice_sample_cube(
     size_mm: float = 20.0,
     layer_height: float = 0.20,
     infill_percentage: int = 20,
-    material: str = "PLA",
+    material: str = "PLA+",
     rate_per_gram: float = 28.0,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
     current_user: Annotated[User, Depends(get_current_user)] = None,
@@ -333,6 +333,29 @@ async def list_slicing_jobs(
     return items
 
 
+@router.get("/models/{cad_model_id}/stl")
+async def get_model_stl(
+    cad_model_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Serve the raw .stl binary for interactive WebGL 3D rendering."""
+    res = await db.execute(select(CadModel).where(CadModel.id == cad_model_id))
+    model = res.scalar_one_or_none()
+    if not model or not model.stored_file_path:
+        raise HTTPException(status_code=404, detail="CAD Model file not found.")
+
+    storage = get_storage()
+    if not await storage.exists(model.stored_file_path):
+        raise HTTPException(status_code=404, detail="STL file does not exist in storage.")
+
+    content = await storage.read(model.stored_file_path)
+    return Response(
+        content=content,
+        media_type="application/sla",
+        headers={"Content-Disposition": f'inline; filename="{model.original_filename}"'},
+    )
+
+
 @router.get("/gcode/{job_id}")
 async def download_gcode(
     job_id: str,
@@ -360,3 +383,4 @@ async def download_gcode(
         media_type="text/plain",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+

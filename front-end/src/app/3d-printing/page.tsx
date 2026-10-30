@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { STLViewer } from "@/components/3d/stl-viewer";
 import { formatLKR } from "@/lib/utils";
 import {
   Layers,
@@ -17,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Eye,
 } from "lucide-react";
 
 interface DimensionsMM {
@@ -62,11 +64,14 @@ interface JobListItem {
 export default function SlicingStudioPage() {
   const [currentPartner, setCurrentPartner] = useState("Janitha");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // VisionCraft Parameters: Layer height strictly 0.2 or 0.1, Material strictly PLA+
   const [layerHeight, setLayerHeight] = useState("0.20");
   const [infillPercentage, setInfillPercentage] = useState(20);
-  const [material, setMaterial] = useState("PLA");
+  const material = "PLA+";
   const [supportEnabled, setSupportEnabled] = useState(false);
-  const [ratePerGram, setRatePerGram] = useState("28.0");
+  const ratePerGram = "28.0";
 
   const [slicingResult, setSlicingResult] = useState<SlicingResult | null>(null);
   const [recentJobs, setRecentJobs] = useState<JobListItem[]>([]);
@@ -123,6 +128,7 @@ export default function SlicingStudioPage() {
         return;
       }
       setSelectedFile(file);
+      setPreviewUrl(null);
       setErrorMessage(null);
     }
   };
@@ -191,6 +197,8 @@ export default function SlicingStudioPage() {
 
       const result: SlicingResult = await res.json();
       setSlicingResult(result);
+      setSelectedFile(null);
+      setPreviewUrl(`/api/v1/3d-printing/models/${result.cad_model_id}/stl`);
       await fetchRecentJobs();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to test sample cube.");
@@ -215,10 +223,10 @@ export default function SlicingStudioPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center space-x-2.5">
                 <Layers className="w-6 h-6 text-blue-600" />
-                <span>FDM .STL Slicing & Price Estimator</span>
+                <span>VisionCraft FDM Slicing & 3D Model Studio</span>
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Upload any .stl model, configure FDM infill and layer parameters, and calculate pricing at VisionCraft's standard 28 LKR/g rate.
+                Interactive 3D WebGL Model Inspection • Material: <strong>PLA+ only</strong> • Layer Heights: <strong>0.2mm & 0.1mm only</strong> • Rate: <strong>28 LKR/g</strong>
               </p>
             </div>
 
@@ -242,13 +250,39 @@ export default function SlicingStudioPage() {
             </div>
           )}
 
+          {/* Interactive 3D WebGL Viewer Card */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-4">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="flex items-center space-x-2">
+                <Eye className="w-4 h-4 text-blue-600" />
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                  Interactive 3D WebGL Model View
+                </h2>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">
+                {selectedFile
+                  ? `Active Mesh: ${selectedFile.name}`
+                  : previewUrl
+                  ? "Active Mesh: Calibration Cube (20mm)"
+                  : "Virtual 220×220mm FDM Bed"}
+              </span>
+            </div>
+
+            {/* 3D Canvas */}
+            <STLViewer
+              file={selectedFile}
+              modelUrl={previewUrl}
+              className="w-full h-80 rounded-lg"
+            />
+          </div>
+
           {/* Slicing Studio Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Upload & Configuration Form (7 Columns) */}
             <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
                 <Box className="w-4 h-4 text-blue-600" />
-                <span>STL Model & FDM Parameters</span>
+                <span>Slicing Parameters (PLA+ & 0.2 / 0.1 mm)</span>
               </h2>
 
               <form onSubmit={handleSlice} className="space-y-4 text-xs">
@@ -257,8 +291,8 @@ export default function SlicingStudioPage() {
                   <label className="block font-semibold text-slate-700 mb-1">
                     Select .STL 3D Model File
                   </label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50/50">
-                    <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50/50">
+                    <UploadCloud className="w-7 h-7 text-slate-400 mx-auto mb-1.5" />
                     <input
                       type="file"
                       accept=".stl"
@@ -274,19 +308,19 @@ export default function SlicingStudioPage() {
                     </label>
                     <p className="text-[11px] text-slate-500 mt-1">
                       {selectedFile ? (
-                        <span className="font-semibold text-slate-900">
-                          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                        <span className="font-semibold text-emerald-700">
+                          ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB) — loaded in 3D viewer above
                         </span>
                       ) : (
-                        "Compatible with Binary and ASCII .stl 3D meshes"
+                        "Upload any .stl file to inspect in 3D and slice"
                       )}
                     </p>
                   </div>
                 </div>
 
                 {/* Slicing Parameter Controls */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {/* Layer Height */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  {/* Layer Height (Strictly 0.2 or 0.1 mm) */}
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
                       Layer Height (Quality)
@@ -294,29 +328,24 @@ export default function SlicingStudioPage() {
                     <select
                       value={layerHeight}
                       onChange={(e) => setLayerHeight(e.target.value)}
-                      className="w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 font-medium"
                     >
-                      <option value="0.12">0.12 mm (High Detail / Fine)</option>
-                      <option value="0.20">0.20 mm (Standard Resolution)</option>
-                      <option value="0.28">0.28 mm (Draft / Fast Print)</option>
+                      <option value="0.20">0.20 mm (Standard Layer)</option>
+                      <option value="0.10">0.10 mm (High Detail Layer)</option>
                     </select>
                   </div>
 
-                  {/* Material */}
+                  {/* Material (Strictly PLA+) */}
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
                       Filament Material
                     </label>
-                    <select
-                      value={material}
-                      onChange={(e) => setMaterial(e.target.value)}
-                      className="w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="PLA">PLA (Density: 1.24 g/cm³)</option>
-                      <option value="PETG">PETG (Density: 1.27 g/cm³)</option>
-                      <option value="ABS">ABS (Density: 1.04 g/cm³)</option>
-                      <option value="TPU">TPU Flexible (Density: 1.21 g/cm³)</option>
-                    </select>
+                    <div className="p-2 bg-slate-100 border border-slate-200 rounded-md text-slate-800 font-semibold flex items-center justify-between">
+                      <span>PLA+</span>
+                      <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-mono">
+                        1.24 g/cm³
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -362,24 +391,16 @@ export default function SlicingStudioPage() {
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      Rate per 1g (LKR)
+                      Rate per 1g (Hardcoded)
                     </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.5"
-                        value={ratePerGram}
-                        onChange={(e) => setRatePerGram(e.target.value)}
-                        className="w-full border border-slate-300 rounded-md p-2 font-mono text-slate-800 bg-slate-50 font-semibold"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-500 font-medium">
-                        LKR / g
-                      </span>
+                    <div className="p-2 bg-slate-100 border border-slate-200 rounded-md font-mono text-slate-800 font-bold flex justify-between items-center">
+                      <span>28.00 LKR</span>
+                      <span className="text-[10px] text-slate-500 font-normal">/ gram</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-3">
+                <div className="pt-2">
                   <button
                     type="submit"
                     disabled={loading || !selectedFile}
@@ -439,7 +460,7 @@ export default function SlicingStudioPage() {
                           {slicingResult.estimated_duration_formatted}
                         </span>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          {slicingResult.layer_count} total layers
+                          {slicingResult.layer_count} layers @ {slicingResult.layer_height_mm}mm
                         </div>
                       </div>
                     </div>
@@ -502,7 +523,7 @@ export default function SlicingStudioPage() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
-                <span>Pricing: Hardcoded 28 LKR / 1g</span>
+                <span>Material: PLA+ only</span>
                 <span className="text-blue-600 font-semibold">VisionCraft Slicer Engine</span>
               </div>
             </div>

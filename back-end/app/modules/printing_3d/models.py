@@ -80,3 +80,4 @@ class SlicingJob(Base):
     )
 
     cad_model: Mapped["CadModel"] = relationship("CadModel", back_populates="slicing_jobs")
+

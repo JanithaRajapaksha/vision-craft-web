@@ -6,11 +6,8 @@ from decimal import Decimal
 from typing import Tuple, Dict, Any
 
 MATERIAL_DENSITIES = {
+    "PLA+": 1.24,  # g/cm³ - VisionCraft Primary Material
     "PLA": 1.24,   # g/cm³
-    "PETG": 1.27,  # g/cm³
-    "ABS": 1.04,   # g/cm³
-    "TPU": 1.21,   # g/cm³
-    "ASA": 1.07,   # g/cm³
 }
 
 
@@ -155,21 +152,25 @@ class STLEngine:
         mesh_meta: Dict[str, Any],
         layer_height_mm: float = 0.20,
         infill_percentage: int = 20,
-        material: str = "PLA",
+        material: str = "PLA+",
         support_enabled: bool = False,
     ) -> Dict[str, Any]:
         """
-        Simulate industrial FDM slicing parameters:
-        Calculates exact layer count, plastic mass (g), filament length (mm), and print duration.
+        Simulate industrial FDM slicing parameters for VisionCraft:
+        - Material: PLA+ (1.24 g/cm³)
+        - Layer Heights: Only 0.2mm (Standard) or 0.1mm (Fine Detail)
         """
+        # Constrain layer height to 0.2mm or 0.1mm
+        lh = 0.10 if abs(float(layer_height_mm) - 0.10) < 0.05 else 0.20
+
         volume_cm3 = mesh_meta["volume_cm3"]
         surface_area_cm2 = mesh_meta["surface_area_cm2"]
         dim_z = mesh_meta["dim_z_mm"]
 
         density = MATERIAL_DENSITIES.get(material.upper(), 1.24)
 
-        # Layer Count
-        layer_count = max(1, int(math.ceil(dim_z / max(0.05, layer_height_mm))))
+        # Layer Count based on chosen layer height (0.1mm or 0.2mm)
+        layer_count = max(1, int(math.ceil(dim_z / lh)))
 
         # Shell volume calculation: 2 perimeters @ 0.4mm nozzle = 0.8mm = 0.08cm wall thickness
         wall_thickness_cm = 0.08
@@ -209,9 +210,9 @@ class STLEngine:
 
         return {
             "layer_count": layer_count,
-            "layer_height_mm": layer_height_mm,
+            "layer_height_mm": lh,
             "infill_percentage": infill_percentage,
-            "material": material,
+            "material": "PLA+",
             "filament_grams": Decimal(str(filament_grams)),
             "filament_length_mm": Decimal(str(filament_length_mm)),
             "estimated_duration_seconds": total_duration_sec,
@@ -282,3 +283,4 @@ G1 X0 Y200 F3000 ; Present finished print
 M84 ; Disable motors
 """
         return gcode_content
+

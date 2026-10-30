@@ -97,3 +97,4 @@ async def test_api_stl_slicing_and_pricing(async_client: AsyncClient):
     assert Decimal(str(data["rate_per_gram_lkr"])) == Decimal("28.00")
     assert Decimal(str(data["calculated_price_lkr"])) == Decimal(str(data["filament_used_grams"])) * Decimal("28.00")
     assert data["gcode_download_url"] is not None
+
