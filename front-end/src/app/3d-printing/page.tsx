@@ -19,6 +19,14 @@ import {
   AlertCircle,
   Sparkles,
   Eye,
+  FileText,
+  ShoppingBag,
+  Printer,
+  Copy,
+  Check,
+  X,
+  Plus,
+  Minus,
 } from "lucide-react";
 
 interface DimensionsMM {
@@ -53,6 +61,60 @@ interface SlicingResult {
   created_at: string;
 }
 
+interface QuotationItem {
+  id: string;
+  quotation_id: string;
+  title: string;
+  description?: string;
+  material: string;
+  layer_height_mm: string;
+  filament_grams: string;
+  estimated_hours: string;
+  quantity: number;
+  unit_price_lkr: string;
+  total_price_lkr: string;
+}
+
+interface Quotation {
+  id: string;
+  quotation_number: string;
+  customer_name: string;
+  customer_phone?: string;
+  customer_email?: string;
+  status: string;
+  subtotal_lkr: string;
+  discount_lkr: string;
+  total_amount_lkr: string;
+  valid_until: string;
+  notes?: string;
+  created_by_partner: string;
+  created_at: string;
+  items: QuotationItem[];
+}
+
+interface OrderItem {
+  id: string;
+  order_id: string;
+  title: string;
+  material: string;
+  quantity: number;
+  unit_price_lkr: string;
+  total_price_lkr: string;
+}
+
+interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_phone?: string;
+  status: string;
+  total_amount_lkr: string;
+  notes?: string;
+  assigned_partner: string;
+  created_at: string;
+  items: OrderItem[];
+}
+
 export default function SlicingStudioPage() {
   const [currentPartner, setCurrentPartner] = useState("Janitha");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -68,6 +130,21 @@ export default function SlicingStudioPage() {
   const [slicingResult, setSlicingResult] = useState<SlicingResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Commercial States
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [activeQuotation, setActiveQuotation] = useState<Quotation | null>(null);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [commercialLoading, setCommercialLoading] = useState(false);
+  const [copiedNotification, setCopiedNotification] = useState(false);
+
+  // Form Fields for Quote / Order
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [commercialNotes, setCommercialNotes] = useState("");
 
   // Authenticate helper with automatic recovery from stale/switched tokens
   const getAuthToken = async (forceRefresh: boolean = false): Promise<string> => {
@@ -239,6 +316,149 @@ export default function SlicingStudioPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle Create Quotation
+  const handleCreateQuotation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slicingResult) return;
+    setCommercialLoading(true);
+    setErrorMessage(null);
+    try {
+      let token = await getAuthToken();
+      const payload = {
+        slicing_job_id: slicingResult.job_id,
+        customer_name: customerName.trim() || "Prospective Client",
+        customer_phone: customerPhone.trim() || undefined,
+        customer_email: customerEmail.trim() || undefined,
+        quantity: Number(orderQuantity) || 1,
+        notes: commercialNotes.trim() || undefined,
+        created_by_partner: currentPartner,
+      };
+
+      let res = await fetch("/api/v1/commercial/quotations/from-slice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        token = await getAuthToken(true);
+        res = await fetch("/api/v1/commercial/quotations/from-slice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to create quotation.");
+      }
+
+      const quote: Quotation = await res.json();
+      setActiveQuotation(quote);
+      setIsQuoteModalOpen(false);
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerEmail("");
+      setOrderQuantity(1);
+      setCommercialNotes("");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create quotation.");
+    } finally {
+      setCommercialLoading(false);
+    }
+  };
+
+  // Handle Add to Order
+  const handleCreateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!slicingResult) return;
+    setCommercialLoading(true);
+    setErrorMessage(null);
+    try {
+      let token = await getAuthToken();
+      const payload = {
+        slicing_job_id: slicingResult.job_id,
+        customer_name: customerName.trim() || "Walk-in Customer",
+        customer_phone: customerPhone.trim() || undefined,
+        customer_email: customerEmail.trim() || undefined,
+        quantity: Number(orderQuantity) || 1,
+        notes: commercialNotes.trim() || undefined,
+        assigned_partner: currentPartner,
+        payment_status: "UNPAID",
+      };
+
+      let res = await fetch("/api/v1/commercial/orders/from-slice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        token = await getAuthToken(true);
+        res = await fetch("/api/v1/commercial/orders/from-slice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to add to active order.");
+      }
+
+      const order: Order = await res.json();
+      setActiveOrder(order);
+      setIsOrderModalOpen(false);
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerEmail("");
+      setOrderQuantity(1);
+      setCommercialNotes("");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to add to order.");
+    } finally {
+      setCommercialLoading(false);
+    }
+  };
+
+  // Copy WhatsApp Quotation Format
+  const copyWhatsAppText = (quote: Quotation) => {
+    const item = quote.items && quote.items[0];
+    const text = `*VisionCraft 3D Printing Quotation*
+Quotation No: *${quote.quotation_number}*
+Client: *${quote.customer_name}*
+Valid Until: ${new Date(quote.valid_until).toLocaleDateString()}
+
+*Specification:*
+- Item: ${item?.title || "FDM 3D Print"}
+- Material: ${item?.material || "PLA+"} (${item?.layer_height_mm || "0.20"}mm layer height)
+- Mass: ${item?.filament_grams || "0"}g per piece
+- Quantity: ${item?.quantity || 1} pcs
+- Unit Rate: ${formatLKR(item?.unit_price_lkr || "0")} (25.00 LKR/g)
+--------------------------------------
+*Total Amount: ${formatLKR(quote.total_amount_lkr)}*
+
+_VisionCraft Engineering Solutions, Colombo, Sri Lanka_`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedNotification(true);
+    setTimeout(() => setCopiedNotification(false), 2500);
   };
 
   return (
@@ -556,17 +776,32 @@ export default function SlicingStudioPage() {
                     )}
                   </div>
 
-                  {/* Download G-code */}
-                  {slicingResult.gcode_download_url && (
-                    <a
-                      href={slicingResult.gcode_download_url}
-                      download
-                      className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                  {/* Commercial Actions: Get Quotation & Add to Order */}
+                  <div className="pt-2 border-t border-slate-200/80 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderQuantity(1);
+                        setIsQuoteModalOpen(true);
+                      }}
+                      className="py-2.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 shadow-sm transition-all cursor-pointer"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Download Sliced G-Code File</span>
-                    </a>
-                  )}
+                      <FileText className="w-4 h-4 text-blue-100" />
+                      <span>Get Quotation</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderQuantity(1);
+                        setIsOrderModalOpen(true);
+                      }}
+                      className="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                      <span>Add to Order</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="py-5 px-3 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-xl">
@@ -581,6 +816,552 @@ export default function SlicingStudioPage() {
           </div>
         </main>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 1. Modal: Create Quotation */}
+      {/* ========================================================================= */}
+      {isQuoteModalOpen && slicingResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="bg-slate-900 px-5 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 rounded-lg bg-blue-600/30 text-blue-400 border border-blue-500/30">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold tracking-tight">Generate Official Quotation</h3>
+                  <p className="text-[11px] text-slate-400">14-Day Price Guarantee at 25 LKR/g</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuoteModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateQuotation} className="p-5 space-y-4 text-xs">
+              {/* Sliced Model Summary Pill */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-900 block truncate max-w-[220px]">
+                    {slicingResult.filename}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {slicingResult.filament_used_grams}g PLA+ • {slicingResult.layer_height_mm}mm layers
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Unit Price</span>
+                  <span className="font-extrabold text-blue-900 font-mono text-sm">
+                    {formatLKR(slicingResult.calculated_price_lkr)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer Inputs */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Customer / Company Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kasun Perera / Apex Robotics"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      WhatsApp / Phone
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="+94 77 ..."
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="client@email.com"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Quantity Stepper & Live Total */}
+                <div className="border border-slate-200 rounded-xl p-3 bg-blue-50/40 flex items-center justify-between">
+                  <div>
+                    <span className="block font-bold text-slate-900 text-xs">Quantity</span>
+                    <span className="text-[10px] text-slate-500">Number of printed units</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold cursor-pointer"
+                    >
+                      <Minus className="w-3.5 h-3.5 text-slate-700" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={orderQuantity}
+                      onChange={(e) => setOrderQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-12 text-center py-1 border border-slate-300 rounded-lg font-bold font-mono text-xs bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(orderQuantity + 1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-slate-700" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Total Quote Value Preview */}
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs font-bold text-slate-600">Total Quotation Value:</span>
+                  <span className="text-base font-extrabold text-blue-900 font-mono">
+                    {formatLKR(
+                      (parseFloat(slicingResult.calculated_price_lkr) * orderQuantity).toFixed(2)
+                    )}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Special Notes / Specifications
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. 20% infill, black PLA+, smooth bed finish"
+                    value={commercialNotes}
+                    onChange={(e) => setCommercialNotes(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQuoteModalOpen(false)}
+                  className="flex-1 py-2 px-3 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={commercialLoading}
+                  className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  {commercialLoading ? (
+                    <span>Generating...</span>
+                  ) : (
+                    <>
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Create Quotation</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. Modal: Add to Active Order */}
+      {/* ========================================================================= */}
+      {isOrderModalOpen && slicingResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="bg-slate-900 px-5 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 rounded-lg bg-emerald-600/30 text-emerald-400 border border-emerald-500/30">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold tracking-tight">Queue Active Production Order</h3>
+                  <p className="text-[11px] text-slate-400">Assigns job directly to 3D printer queue</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOrderModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateOrder} className="p-5 space-y-4 text-xs">
+              {/* Sliced Model Summary */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-900 block truncate max-w-[220px]">
+                    {slicingResult.filename}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {slicingResult.estimated_duration_formatted} print time • {slicingResult.filament_used_grams}g
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Unit Price</span>
+                  <span className="font-extrabold text-slate-900 font-mono text-sm">
+                    {formatLKR(slicingResult.calculated_price_lkr)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer Inputs */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Customer Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Customer or Project Name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Contact Phone / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="+94 77 ..."
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Quantity */}
+                <div className="border border-slate-200 rounded-xl p-3 bg-emerald-50/40 flex items-center justify-between">
+                  <div>
+                    <span className="block font-bold text-slate-900 text-xs">Batch Quantity</span>
+                    <span className="text-[10px] text-slate-500">Number of copies to produce</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold cursor-pointer"
+                    >
+                      <Minus className="w-3.5 h-3.5 text-slate-700" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={orderQuantity}
+                      onChange={(e) => setOrderQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-12 text-center py-1 border border-slate-300 rounded-lg font-bold font-mono text-xs bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setOrderQuantity(orderQuantity + 1)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-slate-700" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Production Total */}
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs font-bold text-slate-600">Total Order Revenue:</span>
+                  <span className="text-base font-extrabold text-emerald-900 font-mono">
+                    {formatLKR(
+                      (parseFloat(slicingResult.calculated_price_lkr) * orderQuantity).toFixed(2)
+                    )}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Production Notes / Filament Color
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Standard Black PLA+, smooth finish, priority print"
+                    value={commercialNotes}
+                    onChange={(e) => setCommercialNotes(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsOrderModalOpen(false)}
+                  className="flex-1 py-2 px-3 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={commercialLoading}
+                  className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  {commercialLoading ? (
+                    <span>Queueing...</span>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      <span>Confirm & Queue Order</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. Modal: Printable / Shareable Official Quotation Sheet */}
+      {/* ========================================================================= */}
+      {activeQuotation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col my-auto">
+            {/* Action Bar (Top) */}
+            <div className="bg-slate-900 px-6 py-3.5 text-white flex items-center justify-between print:hidden">
+              <div className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-blue-400" />
+                <span className="font-bold text-sm">Official Quotation Created</span>
+                <span className="bg-blue-900 text-blue-200 text-[10px] px-2 py-0.5 rounded font-mono font-semibold">
+                  {activeQuotation.quotation_number}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => copyWhatsAppText(activeQuotation)}
+                  className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-emerald-400 border border-slate-700 transition-colors cursor-pointer"
+                >
+                  {copiedNotification ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy for WhatsApp</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="flex items-center space-x-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition-colors cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print / PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveQuotation(null)}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Quotation Document */}
+            <div className="p-8 space-y-6 text-slate-800">
+              {/* Header with VisionCraft Branding */}
+              <div className="flex justify-between items-start border-b border-slate-200 pb-5">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">VisionCraft</h1>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Engineering Design & Rapid FDM 3D Prototyping
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Colombo, Sri Lanka • contact@visioncraft.lk
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                    Quotation
+                  </span>
+                  <div className="text-lg font-black text-slate-900 font-mono mt-2">
+                    {activeQuotation.quotation_number}
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Date: {new Date(activeQuotation.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="text-[11px] text-emerald-600 font-semibold">
+                    Valid Until: {new Date(activeQuotation.valid_until).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Client & Partner Details */}
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">
+                    Quotation Prepared For:
+                  </span>
+                  <div className="font-bold text-slate-900 text-sm">{activeQuotation.customer_name}</div>
+                  {activeQuotation.customer_phone && (
+                    <div className="text-slate-600 text-[11px] mt-0.5">
+                      Phone/WhatsApp: {activeQuotation.customer_phone}
+                    </div>
+                  )}
+                  {activeQuotation.customer_email && (
+                    <div className="text-slate-600 text-[11px]">{activeQuotation.customer_email}</div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">
+                    Prepared By:
+                  </span>
+                  <div className="font-bold text-slate-900 text-sm">{activeQuotation.created_by_partner}</div>
+                  <div className="text-slate-500 text-[11px]">VisionCraft Co-Founder</div>
+                  <div className="text-blue-700 font-semibold text-[11px] mt-1">Rate: 25.00 LKR / 1g PLA+</div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold uppercase text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-3">Item Description</th>
+                      <th className="py-2.5 px-3 text-center">Material & Spec</th>
+                      <th className="py-2.5 px-3 text-center">Mass (g)</th>
+                      <th className="py-2.5 px-3 text-center">Qty</th>
+                      <th className="py-2.5 px-3 text-right">Unit Rate (LKR)</th>
+                      <th className="py-2.5 px-3 text-right">Total (LKR)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {activeQuotation.items.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-3 font-semibold text-slate-900">
+                          {item.title}
+                          {activeQuotation.notes && (
+                            <span className="block text-[10px] text-slate-400 font-normal mt-0.5">
+                              Note: {activeQuotation.notes}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center text-slate-600">
+                          {item.material} • {item.layer_height_mm}mm
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono">{item.filament_grams} g</td>
+                        <td className="py-3 px-3 text-center font-bold">{item.quantity}</td>
+                        <td className="py-3 px-3 text-right font-mono text-slate-700">
+                          {formatLKR(item.unit_price_lkr)}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                          {formatLKR(item.total_price_lkr)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total & Terms */}
+              <div className="flex justify-between items-end pt-2">
+                <div className="text-[10px] text-slate-400 max-w-sm space-y-0.5">
+                  <p className="font-semibold text-slate-600">Terms & Conditions:</p>
+                  <p>• All parts are fabricated using high-grade PLA+ with calibrated FDM parameters.</p>
+                  <p>• Quotation valid for 14 calendar days from date of issue.</p>
+                  <p>• 50% advance required upon production order confirmation.</p>
+                </div>
+                <div className="text-right bg-blue-50/60 border border-blue-200 rounded-xl p-4 min-w-[220px]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">
+                    Total Amount Due
+                  </span>
+                  <div className="text-2xl font-black text-blue-900 font-mono mt-0.5">
+                    {formatLKR(activeQuotation.total_amount_lkr)}
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium">All prices in Sri Lankan Rupees (LKR)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between print:hidden">
+              <span className="text-[11px] text-slate-500">
+                Created by {activeQuotation.created_by_partner} on {new Date(activeQuotation.created_at).toLocaleDateString()}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveQuotation(null)}
+                className="py-1.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. Toast: Active Order Confirmation */}
+      {/* ========================================================================= */}
+      {activeOrder && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-slate-800 max-w-sm animate-in slide-in-from-bottom-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold">Order Queued Successfully!</h4>
+                <div className="text-sm font-extrabold font-mono text-emerald-400 mt-0.5">
+                  {activeOrder.order_number}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveOrder(null)}
+              className="text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-300 flex justify-between items-center">
+            <span>Customer: <strong className="text-white">{activeOrder.customer_name}</strong></span>
+            <span className="font-mono font-bold text-white">{formatLKR(activeOrder.total_amount_lkr)}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

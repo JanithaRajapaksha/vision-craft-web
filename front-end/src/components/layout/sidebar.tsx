@@ -13,12 +13,14 @@ import {
   DollarSign,
   PlusCircle,
   Activity,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Executive Dashboard", href: "/", icon: Activity },
   { name: "3D Printing (FDM)", href: "/3d-printing", icon: Layers },
+  { name: "Orders & Queue", href: "/orders", icon: ShoppingBag },
   { name: "PCB & Engineering", href: "/engineering", icon: Cpu },
   { name: "Customer CRM", href: "/customers", icon: Users },
   { name: "Quotations", href: "/quotations", icon: FileText },

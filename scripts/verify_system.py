@@ -195,16 +195,51 @@ def run_checks():
             )
             stl_ok = status_stl == 200 and len(body_stl) == len(stl_bytes)
             record("8. Database & Storage Binary Mesh Retrieval", stl_ok, f"Retrieved matching {len(body_stl)} bytes", t_stl)
+
+            # 9. Create Formal Quotation from Slicing Job
+            quote_req = json.dumps({
+                "slicing_job_id": job_id,
+                "customer_name": "Diagnostic Robot Labs",
+                "customer_phone": "+94 77 000 0000",
+                "quantity": 4,
+                "notes": "Automated system test",
+                "created_by_partner": "Janitha",
+            }).encode()
+            status_q, body_q, t_q = http_request(
+                f"{BACKEND_URL}/api/v1/commercial/quotations/from-slice",
+                method="POST",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                data=quote_req,
+            )
+            quote_ok = status_q == 201 and "QT-" in body_q.decode()
+            record("9. Create Formal Quotation (QT-2026-XXXX)", quote_ok, f"Quote Number Verified ({status_q})", t_q)
+
+            # 10. Queue Production Order from Slicing Job
+            order_req = json.dumps({
+                "slicing_job_id": job_id,
+                "customer_name": "Diagnostic Robot Labs",
+                "quantity": 2,
+                "notes": "Priority batch order",
+                "assigned_partner": "Janitha",
+            }).encode()
+            status_o, body_o, t_o = http_request(
+                f"{BACKEND_URL}/api/v1/commercial/orders/from-slice",
+                method="POST",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                data=order_req,
+            )
+            order_ok = status_o == 201 and "ORD-" in body_o.decode()
+            record("10. Queue Production Order (ORD-2026-XXXX)", order_ok, f"Order Number Verified ({status_o})", t_o)
         else:
             record("6. Binary STL Upload & Telemetry Extraction", False, f"HTTP {status} - {body.decode()[:60]}", t)
 
-    # 9. Stale/Unknown User Token (Docker/Local DB mismatch test)
+    # 11. Stale/Unknown User Token (Docker/Local DB mismatch test)
     status, body, t = http_request(
         f"{BACKEND_URL}/api/v1/auth/me",
         headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJub25leGlzdGVudCJ9.dummy"},
     )
     stale_handled = status == 401
-    record("9. Stale/Invalid Token 401 Rejection", stale_handled, "Correctly rejected with 401 Unauthorized", t)
+    record("11. Stale/Invalid Token 401 Rejection", stale_handled, "Correctly rejected with 401 Unauthorized", t)
 
     # Summary
     passed_count = sum(1 for _, p, _ in results if p)
