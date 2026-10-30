@@ -1,4 +1,5 @@
 """Application Configuration using Pydantic Settings."""
+from pathlib import Path
 from typing import Optional
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,7 +21,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
 
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./workshop_os.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parent.parent}/workshop_os.db"
 
     # Redis & Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
