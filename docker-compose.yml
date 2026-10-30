@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: workshop_os_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: workshop_admin
+      POSTGRES_PASSWORD: workshop_secure_pass
+      POSTGRES_DB: workshop_os_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workshop_admin -d workshop_os_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: workshop_os_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: workshop_os_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://workshop_admin:workshop_secure_pass@postgres:5432/workshop_os_db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "False"
+      STORAGE_PROVIDER: local
+      STORAGE_LOCAL_ROOT: /app/storage_data
+    ports:
+      - "8000:8000"
+    volumes:
+      - storage_data:/app/storage_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: workshop_os_worker
+    restart: unless-stopped
+    command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "-Q", "slicing,pdf,default"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://workshop_admin:workshop_secure_pass@postgres:5432/workshop_os_db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      STORAGE_PROVIDER: local
+      STORAGE_LOCAL_ROOT: /app/storage_data
+    volumes:
+      - storage_data:/app/storage_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    container_name: workshop_os_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:
