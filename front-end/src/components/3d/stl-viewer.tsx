@@ -338,17 +338,44 @@ export function STLViewer({
 // In-browser Binary & ASCII STL Parser for Three.js BufferGeometry
 function parseSTLBuffer(buffer: ArrayBuffer): THREE.BufferGeometry {
   const reader = new DataView(buffer);
-  const isBinary = buffer.byteLength > 84;
+  
+  if (buffer.byteLength < 84) {
+    return new THREE.BufferGeometry();
+  }
+
+  const triangleCount = reader.getUint32(80, true);
+  const expectedBinaryLength = 84 + triangleCount * 50;
+
+  // Determine if binary:
+  // 1. If length matches expected binary length (or buffer has trailing bytes >= expected)
+  // 2. And triangle count is positive and reasonable (< 50,000,000)
+  let isBinary = false;
+  if (triangleCount > 0 && buffer.byteLength >= expectedBinaryLength && triangleCount < 50000000) {
+    // Check if it's binary by testing if bytes after header are valid floats or by checking ASCII markers
+    isBinary = true;
+  }
+
+  // Double check if file is purely ASCII:
+  // An ASCII STL has 'solid' and contains 'facet' in the first 500 bytes
+  if (isBinary) {
+    try {
+      const headerSample = new TextDecoder().decode(new Uint8Array(buffer, 0, Math.min(500, buffer.byteLength)));
+      if (headerSample.trim().startsWith("solid") && headerSample.includes("facet normal")) {
+        isBinary = false;
+      }
+    } catch {
+      isBinary = true;
+    }
+  }
 
   if (isBinary) {
-    const triangleCount = reader.getUint32(80, true);
-    // If triangle count matches byte length
-    if (84 + triangleCount * 50 === buffer.byteLength) {
+    try {
       const vertices = new Float32Array(triangleCount * 9);
       let offset = 84;
       let vIndex = 0;
 
       for (let i = 0; i < triangleCount; i++) {
+        if (offset + 50 > buffer.byteLength) break;
         offset += 12; // skip normal
         for (let j = 0; j < 3; j++) {
           vertices[vIndex++] = reader.getFloat32(offset, true);
@@ -356,31 +383,46 @@ function parseSTLBuffer(buffer: ArrayBuffer): THREE.BufferGeometry {
           vertices[vIndex++] = reader.getFloat32(offset + 8, true);
           offset += 12;
         }
-        offset += 2; // skip attribute
+        offset += 2; // skip attribute byte count
       }
 
       const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+      geometry.setAttribute("position", new THREE.BufferAttribute(vertices.subarray(0, vIndex), 3));
       return geometry;
+    } catch (err) {
+      console.warn("Binary STL parse error, attempting ASCII fallback", err);
     }
   }
 
   // Fallback to ASCII STL Parser
-  const text = new TextDecoder().decode(buffer);
-  const lines = text.split("\n");
-  const vertexList: number[] = [];
+  try {
+    const text = new TextDecoder().decode(buffer);
+    const lines = text.split("\n");
+    const vertexList: number[] = [];
 
-  for (let line of lines) {
-    line = line.trim().toLowerCase();
-    if (line.startsWith("vertex")) {
-      const parts = line.split(/\s+/);
-      if (parts.length >= 4) {
-        vertexList.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
+    for (let line of lines) {
+      line = line.trim();
+      if (line.toLowerCase().startsWith("vertex")) {
+        const parts = line.split(/\s+/);
+        if (parts.length >= 4) {
+          const x = parseFloat(parts[1]);
+          const y = parseFloat(parts[2]);
+          const z = parseFloat(parts[3]);
+          if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+            vertexList.push(x, y, z);
+          }
+        }
       }
     }
-  }
 
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(vertexList), 3));
-  return geometry;
+    const geometry = new THREE.BufferGeometry();
+    if (vertexList.length > 0) {
+      geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(vertexList), 3));
+    }
+    return geometry;
+  } catch (err) {
+    console.error("Failed to parse STL as ASCII:", err);
+    return new THREE.BufferGeometry();
+  }
 }
+

@@ -65,6 +65,7 @@ export default function SlicingStudioPage() {
   const [currentPartner, setCurrentPartner] = useState("Janitha");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // VisionCraft Parameters: Layer height strictly 0.2 or 0.1, Material strictly PLA+
   const [layerHeight, setLayerHeight] = useState("0.20");
@@ -82,17 +83,21 @@ export default function SlicingStudioPage() {
   const getAuthToken = async (): Promise<string> => {
     let token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
-      const loginRes = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "janitha@visioncraft.lk", password: "Password123!" }),
-      });
-      if (loginRes.ok) {
-        const data = await loginRes.json();
-        token = data.access_token as string;
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", token);
+      try {
+        const loginRes = await fetch("/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "janitha@visioncraft.lk", password: "Password123!" }),
+        });
+        if (loginRes.ok) {
+          const data = await loginRes.json();
+          token = data.access_token as string;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", token);
+          }
         }
+      } catch (err) {
+        console.warn("Backend auth fetch failed:", err);
       }
     }
     return token || "";
@@ -118,18 +123,44 @@ export default function SlicingStudioPage() {
     fetchRecentJobs();
   }, []);
 
-  // Handle STL File Selection
+  // Process an incoming file from picker or drag-and-drop
+  const processIncomingFile = (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".stl")) {
+      setErrorMessage(`"${file.name}" is not an .stl file. Please choose a valid .stl 3D model.`);
+      setSelectedFile(null);
+      return;
+    }
+    setSelectedFile(file);
+    setPreviewUrl(null);
+    setErrorMessage(null);
+  };
+
+  // Handle STL File Selection via file input
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!file.name.toLowerCase().endsWith(".stl")) {
-        setErrorMessage("Please select a valid .stl 3D model file.");
-        setSelectedFile(null);
-        return;
-      }
-      setSelectedFile(file);
-      setPreviewUrl(null);
-      setErrorMessage(null);
+      processIncomingFile(e.target.files[0]);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processIncomingFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -291,31 +322,44 @@ export default function SlicingStudioPage() {
                   <label className="block font-semibold text-slate-700 mb-1">
                     Select .STL 3D Model File
                   </label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-blue-500 transition-colors bg-slate-50/50">
-                    <UploadCloud className="w-7 h-7 text-slate-400 mx-auto mb-1.5" />
+                  <label
+                    htmlFor="stl-upload-input"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                      isDragging
+                        ? "border-blue-500 bg-blue-50/70 scale-[1.01]"
+                        : selectedFile
+                        ? "border-emerald-400 bg-emerald-50/30 hover:border-emerald-500"
+                        : "border-slate-300 hover:border-blue-400 hover:bg-slate-50 bg-slate-50/50"
+                    }`}
+                  >
                     <input
                       type="file"
-                      accept=".stl"
+                      accept=".stl,.STL,model/stl,application/sla,application/vnd.ms-pki.stl,application/octet-stream"
                       onChange={handleFileChange}
                       className="hidden"
                       id="stl-upload-input"
                     />
-                    <label
-                      htmlFor="stl-upload-input"
-                      className="cursor-pointer inline-flex items-center space-x-1.5 text-xs font-semibold text-blue-600 hover:text-blue-500"
-                    >
-                      <span>Choose .stl file</span>
-                    </label>
+                    <UploadCloud
+                      className={`w-8 h-8 mx-auto mb-2 transition-colors ${
+                        isDragging ? "text-blue-600 animate-bounce" : selectedFile ? "text-emerald-600" : "text-slate-400"
+                      }`}
+                    />
+                    <div className="text-xs font-semibold text-blue-600 hover:text-blue-500">
+                      {isDragging ? "Drop your .stl file here" : "Click to browse or drag & drop .stl file"}
+                    </div>
                     <p className="text-[11px] text-slate-500 mt-1">
                       {selectedFile ? (
-                        <span className="font-semibold text-emerald-700">
+                        <span className="font-semibold text-emerald-700 block mt-1">
                           ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB) — loaded in 3D viewer above
                         </span>
                       ) : (
-                        "Upload any .stl file to inspect in 3D and slice"
+                        "Supports both Binary & ASCII .stl files"
                       )}
                     </p>
-                  </div>
+                  </label>
                 </div>
 
                 {/* Slicing Parameter Controls */}
