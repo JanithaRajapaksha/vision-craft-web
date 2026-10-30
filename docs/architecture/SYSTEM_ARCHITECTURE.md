@@ -435,3 +435,4 @@ flowchart LR
   - Automated Pytest test suite covering financial ledger integrity, slicer parsing, and cost estimation.
   - Docker Compose orchestration (PostgreSQL, Redis, FastAPI, Celery Worker, Next.js).
   - Production security checklist, documentation, and user guide.
+

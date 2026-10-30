@@ -160,3 +160,4 @@ When sales engineers adjust the calculated price (e.g. discounting for bulk quan
 - The original unadjusted cost breakdown is permanently preserved in `pricing_breakdown` JSONB.
 - The override amount, adjustment delta, and user-provided reason are stored.
 - The quotation document displays the professional customer-facing line item while internal staff retain full visibility into underlying margins.
+

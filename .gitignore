@@ -64,3 +64,4 @@ celerybeat.pid
 .vscode/
 *.swp
 *.swo
+

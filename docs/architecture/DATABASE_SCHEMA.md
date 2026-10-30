@@ -112,7 +112,7 @@ CREATE INDEX idx_customer_code ON customers(customer_code);
 
 ### 2.3 3D Printing & Manufacturing Fleet
 ```sql
-CREATE TYPE printer_technology AS ENUM ('FDM', 'SLA', 'SLS');
+CREATE TYPE printer_technology AS ENUM ('FDM'); -- Focused exclusively on FDM 3D printing
 CREATE TYPE printer_status AS ENUM ('IDLE', 'PRINTING', 'MAINTENANCE', 'OFFLINE');
 
 CREATE TABLE printers (
@@ -372,7 +372,7 @@ CREATE TABLE job_time_logs (
 ```sql
 CREATE TABLE inventory_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL, -- "Filaments", "Resins", "Microcontrollers", "Passive Components"
+    name VARCHAR(100) NOT NULL, -- "FDM Filaments (PLA/PETG/ABS/TPU)", "3D Printer Nozzles & Parts", "Microcontrollers", "Passive Components", "PCBs"
     parent_id UUID REFERENCES inventory_categories(id)
 );
 
@@ -628,3 +628,4 @@ CREATE TABLE founder_profit_shares (
     journal_entry_id UUID REFERENCES journal_entries(id)
 );
 ```
+
