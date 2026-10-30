@@ -32,13 +32,13 @@ async def upload_and_slice_stl(
     infill_percentage: int = Form(20),
     material: str = Form("PLA+"),
     support_enabled: bool = Form(False),
-    rate_per_gram: float = Form(28.0),
+    rate_per_gram: float = Form(25.0),
     db: Annotated[AsyncSession, Depends(get_db)] = None,
     current_user: Annotated[User, Depends(get_current_user)] = None,
 ):
     """
     Upload an .STL file, slice it with FDM parameters, and calculate estimated price
-    using the hardcoded 28 LKR / 1g rate.
+    using the hardcoded 25 LKR / 1g rate.
     """
     if not file.filename.lower().endswith(".stl"):
         raise HTTPException(
@@ -168,7 +168,7 @@ async def generate_and_slice_sample_cube(
     layer_height: float = 0.20,
     infill_percentage: int = 20,
     material: str = "PLA+",
-    rate_per_gram: float = 28.0,
+    rate_per_gram: float = 25.0,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
     current_user: Annotated[User, Depends(get_current_user)] = None,
 ):

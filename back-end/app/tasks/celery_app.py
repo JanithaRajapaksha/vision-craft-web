@@ -27,3 +27,4 @@ celery_app.conf.update(
 @celery_app.task(name="ping")
 def ping_task():
     return "pong"
+

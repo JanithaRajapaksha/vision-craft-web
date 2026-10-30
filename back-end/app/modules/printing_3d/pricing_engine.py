@@ -1,12 +1,12 @@
 """VisionCraft 3D Printing Pricing Engine.
 
-Currently configured with the standard hardcoded rate: 28 LKR per 1 gram.
+Currently configured with the standard hardcoded rate: 25 LKR per 1 gram.
 Designed with a modular hook to integrate multi-variable equations (combining print duration)
 as soon as provided.
 """
 from decimal import Decimal, ROUND_HALF_UP
 
-DEFAULT_RATE_PER_GRAM_LKR = Decimal("28.00")
+DEFAULT_RATE_PER_GRAM_LKR = Decimal("25.00")
 
 
 def calculate_fdm_price(
@@ -16,12 +16,12 @@ def calculate_fdm_price(
 ) -> dict:
     """
     Calculate FDM 3D printing price.
-    Currently: Price = Grams * 28 LKR
+    Currently: Price = Grams * 25 LKR
     """
     grams = filament_grams.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     rate = rate_per_gram.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     
-    # Baseline: 28 LKR per gram
+    # Baseline: 25 LKR per gram
     raw_price = grams * rate
     final_price = raw_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 

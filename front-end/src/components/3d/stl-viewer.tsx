@@ -15,7 +15,7 @@ export function STLViewer({
   file,
   modelUrl,
   color = "#3b82f6", // VisionCraft blue
-  className = "w-full h-80",
+  className = "w-full h-full min-h-[500px]",
 }: STLViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [wireframe, setWireframe] = useState(false);
@@ -160,14 +160,21 @@ export function STLViewer({
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const newWidth = containerRef.current.clientWidth;
       const newHeight = containerRef.current.clientHeight;
+      if (newWidth === 0 || newHeight === 0) return;
       cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
     };
     window.addEventListener("resize", handleResize);
 
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
+
     return () => {
       if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);

@@ -67,12 +67,12 @@ export default function SlicingStudioPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // VisionCraft Parameters: Layer height strictly 0.2 or 0.1, Material strictly PLA+
+  // VisionCraft Parameters: Layer height strictly 0.2 or 0.1, Material strictly PLA+, Rate: 25 LKR/g
   const [layerHeight, setLayerHeight] = useState("0.20");
   const [infillPercentage, setInfillPercentage] = useState(20);
   const material = "PLA+";
   const [supportEnabled, setSupportEnabled] = useState(false);
-  const ratePerGram = "28.0";
+  const ratePerGram = "25.0";
 
   const [slicingResult, setSlicingResult] = useState<SlicingResult | null>(null);
   const [recentJobs, setRecentJobs] = useState<JobListItem[]>([]);
@@ -248,7 +248,7 @@ export default function SlicingStudioPage() {
           onPartnerChange={setCurrentPartner}
         />
 
-        <main className="p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <main className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto w-full">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -257,7 +257,7 @@ export default function SlicingStudioPage() {
                 <span>VisionCraft FDM Slicing & 3D Model Studio</span>
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Interactive 3D WebGL Model Inspection • Material: <strong>PLA+ only</strong> • Layer Heights: <strong>0.2mm & 0.1mm only</strong> • Rate: <strong>28 LKR/g</strong>
+                Interactive 3D WebGL Model Inspection • Material: <strong>PLA+ only</strong> • Layer Heights: <strong>0.2mm & 0.1mm only</strong> • Rate: <strong>25 LKR/g</strong>
               </p>
             </div>
 
@@ -266,7 +266,7 @@ export default function SlicingStudioPage() {
                 type="button"
                 onClick={handleTestSampleCube}
                 disabled={loading}
-                className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg shadow-sm transition-all"
+                className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg shadow-sm transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-blue-600" />
                 <span>1-Click Test (20mm Calibration Cube)</span>
@@ -281,213 +281,188 @@ export default function SlicingStudioPage() {
             </div>
           )}
 
-          {/* Interactive 3D WebGL Viewer Card */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-4">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="flex items-center space-x-2">
-                <Eye className="w-4 h-4 text-blue-600" />
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                  Interactive 3D WebGL Model View
+          {/* Slicing Studio Main Layout: Left Panel (Controls & Telemetry) + Right Panel (Full Vertical 3D Viewer) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left Panel: Upload, Slicing Parameters & Results (5 cols on lg, 4 cols on xl) */}
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col space-y-5">
+              {/* Parameters & Upload Form Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                  <Box className="w-4 h-4 text-blue-600" />
+                  <span>Slicing Parameters (PLA+ & 25 LKR/g)</span>
                 </h2>
-              </div>
-              <span className="text-xs text-slate-500 font-medium">
-                {selectedFile
-                  ? `Active Mesh: ${selectedFile.name}`
-                  : previewUrl
-                  ? "Active Mesh: Calibration Cube (20mm)"
-                  : "Virtual 220×220mm FDM Bed"}
-              </span>
-            </div>
 
-            {/* 3D Canvas */}
-            <STLViewer
-              file={selectedFile}
-              modelUrl={previewUrl}
-              className="w-full h-80 rounded-lg"
-            />
-          </div>
-
-          {/* Slicing Studio Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left: Upload & Configuration Form (7 Columns) */}
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
-                <Box className="w-4 h-4 text-blue-600" />
-                <span>Slicing Parameters (PLA+ & 0.2 / 0.1 mm)</span>
-              </h2>
-
-              <form onSubmit={handleSlice} className="space-y-4 text-xs">
-                {/* Drag & Drop File Zone */}
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Select .STL 3D Model File
-                  </label>
-                  <label
-                    htmlFor="stl-upload-input"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                      isDragging
-                        ? "border-blue-500 bg-blue-50/70 scale-[1.01]"
-                        : selectedFile
-                        ? "border-emerald-400 bg-emerald-50/30 hover:border-emerald-500"
-                        : "border-slate-300 hover:border-blue-400 hover:bg-slate-50 bg-slate-50/50"
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      accept=".stl,.STL,model/stl,application/sla,application/vnd.ms-pki.stl,application/octet-stream"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="stl-upload-input"
-                    />
-                    <UploadCloud
-                      className={`w-8 h-8 mx-auto mb-2 transition-colors ${
-                        isDragging ? "text-blue-600 animate-bounce" : selectedFile ? "text-emerald-600" : "text-slate-400"
+                <form onSubmit={handleSlice} className="space-y-4 text-xs">
+                  {/* Drag & Drop File Zone */}
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Upload .STL 3D Model
+                    </label>
+                    <label
+                      htmlFor="stl-upload-input"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`block border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                        isDragging
+                          ? "border-blue-500 bg-blue-50/70 scale-[1.01]"
+                          : selectedFile
+                          ? "border-emerald-400 bg-emerald-50/30 hover:border-emerald-500"
+                          : "border-slate-300 hover:border-blue-400 hover:bg-slate-50 bg-slate-50/50"
                       }`}
-                    />
-                    <div className="text-xs font-semibold text-blue-600 hover:text-blue-500">
-                      {isDragging ? "Drop your .stl file here" : "Click to browse or drag & drop .stl file"}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      {selectedFile ? (
-                        <span className="font-semibold text-emerald-700 block mt-1">
-                          ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB) — loaded in 3D viewer above
-                        </span>
-                      ) : (
-                        "Supports both Binary & ASCII .stl files"
-                      )}
-                    </p>
-                  </label>
-                </div>
-
-                {/* Slicing Parameter Controls */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  {/* Layer Height (Strictly 0.2 or 0.1 mm) */}
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Layer Height (Quality)
-                    </label>
-                    <select
-                      value={layerHeight}
-                      onChange={(e) => setLayerHeight(e.target.value)}
-                      className="w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 font-medium"
                     >
-                      <option value="0.20">0.20 mm (Standard Layer)</option>
-                      <option value="0.10">0.10 mm (High Detail Layer)</option>
-                    </select>
+                      <input
+                        type="file"
+                        accept=".stl,.STL,model/stl,application/sla,application/vnd.ms-pki.stl,application/octet-stream"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="stl-upload-input"
+                      />
+                      <UploadCloud
+                        className={`w-7 h-7 mx-auto mb-1.5 transition-colors ${
+                          isDragging ? "text-blue-600 animate-bounce" : selectedFile ? "text-emerald-600" : "text-slate-400"
+                        }`}
+                      />
+                      <div className="text-xs font-semibold text-blue-600 hover:text-blue-500">
+                        {isDragging ? "Drop your .stl file here" : "Browse or drag & drop .stl file"}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 truncate">
+                        {selectedFile ? (
+                          <span className="font-semibold text-emerald-700 block">
+                            ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                          </span>
+                        ) : (
+                          "Binary & ASCII formats supported"
+                        )}
+                      </p>
+                    </label>
                   </div>
 
-                  {/* Material (Strictly PLA+) */}
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Filament Material
-                    </label>
-                    <div className="p-2 bg-slate-100 border border-slate-200 rounded-md text-slate-800 font-semibold flex items-center justify-between">
-                      <span>PLA+</span>
-                      <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-mono">
-                        1.24 g/cm³
-                      </span>
+                  {/* Slicing Parameter Controls */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    {/* Layer Height (Strictly 0.2 or 0.1 mm) */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        Layer Height
+                      </label>
+                      <select
+                        value={layerHeight}
+                        onChange={(e) => setLayerHeight(e.target.value)}
+                        className="w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500 font-medium text-xs"
+                      >
+                        <option value="0.20">0.20 mm (Standard)</option>
+                        <option value="0.10">0.10 mm (Fine Detail)</option>
+                      </select>
+                    </div>
+
+                    {/* Material (Strictly PLA+) */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        Filament
+                      </label>
+                      <div className="p-2 bg-slate-100 border border-slate-200 rounded-md text-slate-800 font-semibold flex items-center justify-between text-xs">
+                        <span>PLA+</span>
+                        <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-mono">
+                          1.24 g/cm³
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Infill Slider */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-slate-700">
-                      Infill Density: <span className="text-blue-600 font-bold">{infillPercentage}%</span>
-                    </label>
-                    <span className="text-[11px] text-slate-500">Grid / Gyroid Pattern</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    step="5"
-                    value={infillPercentage}
-                    onChange={(e) => setInfillPercentage(parseInt(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
-                    <span>10% (Light)</span>
-                    <span>20% (Standard)</span>
-                    <span>50% (Rigid)</span>
-                    <span>100% (Solid)</span>
-                  </div>
-                </div>
-
-                {/* Support Structures & Rate */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-1">
-                  <div className="flex items-center space-x-2 pt-2">
+                  {/* Infill Slider */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="font-semibold text-slate-700">
+                        Infill Density: <span className="text-blue-600 font-bold">{infillPercentage}%</span>
+                      </label>
+                      <span className="text-[10px] text-slate-500">Grid / Gyroid</span>
+                    </div>
                     <input
-                      type="checkbox"
-                      id="support-check"
-                      checked={supportEnabled}
-                      onChange={(e) => setSupportEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                      type="range"
+                      min="10"
+                      max="100"
+                      step="5"
+                      value={infillPercentage}
+                      onChange={(e) => setInfillPercentage(parseInt(e.target.value))}
+                      className="w-full accent-blue-600 cursor-pointer"
                     />
-                    <label htmlFor="support-check" className="font-semibold text-slate-700 cursor-pointer">
-                      Enable Support Structures (+12% allowance)
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Rate per 1g (Hardcoded)
-                    </label>
-                    <div className="p-2 bg-slate-100 border border-slate-200 rounded-md font-mono text-slate-800 font-bold flex justify-between items-center">
-                      <span>28.00 LKR</span>
-                      <span className="text-[10px] text-slate-500 font-normal">/ gram</span>
+                    <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                      <span>10% Light</span>
+                      <span>20% Std</span>
+                      <span>50% Rigid</span>
+                      <span>100% Solid</span>
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading || !selectedFile}
-                    className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 transition-all cursor-pointer"
-                  >
-                    <Play className="w-4 h-4 fill-white" />
-                    <span>{loading ? "Slicing Model & Extracting Telemetry..." : "Slice STL & Calculate Price"}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
+                  {/* Support Structures & Rate */}
+                  <div className="grid grid-cols-2 gap-3 items-center pt-1">
+                    <div className="flex items-center space-x-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="support-check"
+                        checked={supportEnabled}
+                        onChange={(e) => setSupportEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                      />
+                      <label htmlFor="support-check" className="font-semibold text-slate-700 cursor-pointer text-[11px] leading-tight">
+                        Enable Supports (+12%)
+                      </label>
+                    </div>
 
-            {/* Right: Slicing Results & Telemetry Card (5 Columns) */}
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2 mb-4">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1 text-[11px]">
+                        Rate per 1g
+                      </label>
+                      <div className="p-1.5 bg-slate-100 border border-slate-200 rounded-md font-mono text-slate-800 font-bold flex justify-between items-center text-xs">
+                        <span>25.00 LKR</span>
+                        <span className="text-[10px] text-slate-500 font-normal">/ gram</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading || !selectedFile}
+                      className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                      <Play className="w-4 h-4 fill-white" />
+                      <span>{loading ? "Slicing Model & Calculating..." : "Slice STL & Calculate Price"}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Telemetry & Price Output Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
                   <FileCode className="w-4 h-4 text-emerald-600" />
-                  <span>Slicing Telemetry & Price Output</span>
+                  <span>Slicing Telemetry & Price (25 LKR/g)</span>
                 </h2>
 
                 {slicingResult ? (
                   <div className="space-y-4">
                     {/* Price Hero Banner */}
-                    <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-center">
-                      <span className="text-[11px] uppercase tracking-wider font-bold text-blue-700 block">
+                    <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-center">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-blue-700 block">
                         Calculated Selling Price
                       </span>
-                      <div className="text-3xl font-extrabold text-blue-900 my-1 font-mono">
+                      <div className="text-2xl font-extrabold text-blue-900 my-1 font-mono">
                         {formatLKR(slicingResult.calculated_price_lkr)}
                       </div>
-                      <div className="text-xs text-blue-700 font-medium">
+                      <div className="text-[11px] text-blue-700 font-medium">
                         Formula: {slicingResult.formula_applied}
                       </div>
                     </div>
 
                     {/* Telemetry Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                        <div className="flex items-center space-x-1.5 text-slate-500 mb-1">
+                    <div className="grid grid-cols-2 gap-2.5 text-xs">
+                      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div className="flex items-center space-x-1.5 text-slate-500 mb-0.5">
                           <Weight className="w-3.5 h-3.5 text-blue-600" />
-                          <span className="font-medium">Filament Weight</span>
+                          <span className="font-medium text-[11px]">Weight</span>
                         </div>
-                        <span className="text-base font-bold text-slate-900 font-mono">
+                        <span className="text-sm font-bold text-slate-900 font-mono">
                           {slicingResult.filament_used_grams} g
                         </span>
                         <div className="text-[10px] text-slate-400 mt-0.5">
@@ -495,12 +470,12 @@ export default function SlicingStudioPage() {
                         </div>
                       </div>
 
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                        <div className="flex items-center space-x-1.5 text-slate-500 mb-1">
+                      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div className="flex items-center space-x-1.5 text-slate-500 mb-0.5">
                           <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="font-medium">Estimated Time</span>
+                          <span className="font-medium text-[11px]">Print Time</span>
                         </div>
-                        <span className="text-base font-bold text-slate-900 font-mono">
+                        <span className="text-sm font-bold text-slate-900 font-mono">
                           {slicingResult.estimated_duration_formatted}
                         </span>
                         <div className="text-[10px] text-slate-400 mt-0.5">
@@ -510,15 +485,9 @@ export default function SlicingStudioPage() {
                     </div>
 
                     {/* Dimensions & Geometry */}
-                    <div className="border border-slate-200 rounded-lg p-3 text-xs space-y-1.5">
+                    <div className="border border-slate-200 rounded-lg p-2.5 text-[11px] space-y-1">
                       <div className="flex justify-between items-center text-slate-600">
-                        <span>Source File:</span>
-                        <span className="font-semibold text-slate-900 max-w-[180px] truncate">
-                          {slicingResult.filename}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span>Dimensions (X × Y × Z):</span>
+                        <span>Dimensions:</span>
                         <span className="font-mono font-semibold text-slate-900">
                           {slicingResult.dimensions_mm.x} × {slicingResult.dimensions_mm.y} × {slicingResult.dimensions_mm.z} mm
                         </span>
@@ -530,15 +499,9 @@ export default function SlicingStudioPage() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-slate-600">
-                        <span>Triangle Facets:</span>
+                        <span>Triangles:</span>
                         <span className="font-mono font-semibold text-slate-900">
                           {slicingResult.triangle_count.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span>Material Profile:</span>
-                        <span className="font-semibold text-slate-900">
-                          {slicingResult.material} ({slicingResult.layer_height_mm}mm layer)
                         </span>
                       </div>
                     </div>
@@ -556,19 +519,49 @@ export default function SlicingStudioPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-200 rounded-xl">
-                    <Layers className="w-10 h-10 text-slate-300 mb-2" />
-                    <span className="font-bold text-sm text-slate-700">No Model Sliced Yet</span>
-                    <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                      Select an .stl file or click "1-Click Test" to view dimensions, grams, printing duration, and the 28 LKR/g price estimation.
+                  <div className="py-6 px-4 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-xl">
+                    <Layers className="w-8 h-8 text-slate-300 mb-1.5" />
+                    <span className="font-bold text-xs text-slate-700">No Model Sliced Yet</span>
+                    <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
+                      Choose an .stl model on the left or use 1-Click Test to extract telemetry and calculate price at 25 LKR/g.
                     </p>
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
-                <span>Material: PLA+ only</span>
-                <span className="text-blue-600 font-semibold">VisionCraft Slicer Engine</span>
+            {/* Right Panel: Interactive 3D WebGL Studio taking full vertical space (7 cols on lg, 8 cols on xl) */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col min-h-[620px] lg:min-h-[760px]">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-md flex-1 flex flex-col overflow-hidden">
+                {/* 3D Viewport Header Bar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-slate-700/60 text-slate-200">
+                  <div className="flex items-center space-x-2">
+                    <Eye className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                      Interactive 3D WebGL Model Studio
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-medium">
+                    {selectedFile ? (
+                      <span className="text-emerald-400 font-semibold truncate max-w-xs">
+                        {selectedFile.name}
+                      </span>
+                    ) : previewUrl ? (
+                      <span className="text-blue-400 font-semibold">Calibration Cube (20mm)</span>
+                    ) : (
+                      <span>Virtual 220×220mm FDM Bed</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Vertical Full-Height 3D Viewport */}
+                <div className="flex-1 relative w-full h-full min-h-[560px]">
+                  <STLViewer
+                    file={selectedFile}
+                    modelUrl={previewUrl}
+                    className="w-full h-full absolute inset-0"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -596,7 +589,7 @@ export default function SlicingStudioPage() {
                     <th className="py-2.5 px-4">Infill %</th>
                     <th className="py-2.5 px-4">Weight (g)</th>
                     <th className="py-2.5 px-4">Estimated Duration</th>
-                    <th className="py-2.5 px-4 text-right">Price (28 LKR/g)</th>
+                    <th className="py-2.5 px-4 text-right">Price (25 LKR/g)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-normal">

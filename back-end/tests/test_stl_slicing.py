@@ -1,4 +1,4 @@
-"""Tests for STL Parsing, Slicing Engine, and 28 LKR/g Price Estimation."""
+"""Tests for STL Parsing, Slicing Engine, and 25 LKR/g Price Estimation."""
 import struct
 import pytest
 from decimal import Decimal
@@ -60,16 +60,16 @@ def test_stl_slicing_telemetry_and_hardcoded_pricing():
     assert telemetry["layer_count"] == 100  # 20mm / 0.2mm = 100 layers
     assert telemetry["filament_grams"] > Decimal("1.0")
 
-    # Pricing with hardcoded 28 LKR / 1g
+    # Pricing with hardcoded 25 LKR / 1g
     pricing = calculate_fdm_price(
         filament_grams=telemetry["filament_grams"],
         duration_seconds=telemetry["estimated_duration_seconds"],
-        rate_per_gram=Decimal("28.00"),
+        rate_per_gram=Decimal("25.00"),
     )
 
-    expected_price = (telemetry["filament_grams"] * Decimal("28.00")).quantize(Decimal("0.01"))
+    expected_price = (telemetry["filament_grams"] * Decimal("25.00")).quantize(Decimal("0.01"))
     assert Decimal(str(pricing["calculated_price_lkr"])) == expected_price
-    assert "× 28.00 LKR/g" in pricing["formula_applied"]
+    assert "× 25.00 LKR/g" in pricing["formula_applied"]
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_api_stl_slicing_and_pricing(async_client: AsyncClient):
 
     # Test sample cube endpoint
     res = await async_client.post(
-        "/api/v1/3d-printing/sample-cube?size_mm=20.0&infill_percentage=20&material=PLA&rate_per_gram=28.0",
+        "/api/v1/3d-printing/sample-cube?size_mm=20.0&infill_percentage=20&material=PLA&rate_per_gram=25.0",
         headers=headers,
     )
     assert res.status_code == 200
@@ -94,7 +94,7 @@ async def test_api_stl_slicing_and_pricing(async_client: AsyncClient):
     assert data["dimensions_mm"]["y"] == 20.0
     assert data["dimensions_mm"]["z"] == 20.0
     assert data["layer_count"] == 100
-    assert Decimal(str(data["rate_per_gram_lkr"])) == Decimal("28.00")
-    assert Decimal(str(data["calculated_price_lkr"])) == Decimal(str(data["filament_used_grams"])) * Decimal("28.00")
+    assert Decimal(str(data["rate_per_gram_lkr"])) == Decimal("25.00")
+    assert Decimal(str(data["calculated_price_lkr"])) == Decimal(str(data["filament_used_grams"])) * Decimal("25.00")
     assert data["gcode_download_url"] is not None
 
