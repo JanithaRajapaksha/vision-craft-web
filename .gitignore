@@ -26,6 +26,9 @@ htmlcov/
 venv/
 .venv/
 ENV/
+*.db
+*.sqlite
+*.sqlite3
 
 # Node & Next.js
 node_modules/
