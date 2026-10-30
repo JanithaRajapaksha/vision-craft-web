@@ -154,3 +154,4 @@ class LedgerService:
         original_entry.status = JournalEntryStatus.REVERSED.value
         await db.flush()
         return reversal
+

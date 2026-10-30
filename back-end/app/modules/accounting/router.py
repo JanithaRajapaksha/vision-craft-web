@@ -203,3 +203,4 @@ async def reverse_journal_entry(
         lines=lines_res,
         created_at=saved_entry.created_at,
     )
+

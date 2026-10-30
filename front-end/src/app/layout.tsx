@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Workshop OS – Business Management System",
-  description: "Centralized Operating System for FDM 3D Printing, PCB Fabrication, and Engineering Services",
+  title: "VisionCraft OS – Business Management System",
+  description: "VisionCraft Centralized Operating System for FDM 3D Printing, PCB Fabrication, and Engineering Services",
 };
 
 export default function RootLayout({
@@ -21,3 +21,4 @@ export default function RootLayout({
 }
 
 type ReadurlencodedProps<T> = T;
+

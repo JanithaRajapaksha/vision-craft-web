@@ -1,14 +1,14 @@
-# Workshop OS – Double-Entry Accounting & Four-Founder Financial Engine
+# VisionCraft OS – Double-Entry Accounting & Four-Founder Financial Engine
 
-This document provides the exact double-entry ledger specifications, the Standard Chart of Accounts, and the four-founder equity, expense reimbursement, and profit distribution workflows.
+This document provides the exact double-entry ledger specifications, the Standard Chart of Accounts, and the VisionCraft four-founder equity, expense reimbursement, and profit distribution workflows.
 
 ---
 
 ## 1. Standard Chart of Accounts (COA)
 
-Workshop OS initializes with an engineering-tailored Chart of Accounts. All monetary figures are in **Sri Lankan Rupees (LKR)** using `Decimal` (`NUMERIC(15, 2)`). All accounts initialize with a **strict starting balance of 0.00 LKR**.
+VisionCraft OS initializes with an engineering-tailored Chart of Accounts. All monetary figures are in **Sri Lankan Rupees (LKR)** using `Decimal` (`NUMERIC(15, 2)`). All accounts initialize with a **strict starting balance of 0.00 LKR**.
 
-The 4 co-founders/partners are:
+The 4 co-founders/partners of VisionCraft are:
 1. **Janitha**
 2. **Lalitha**
 3. **Thakshila**

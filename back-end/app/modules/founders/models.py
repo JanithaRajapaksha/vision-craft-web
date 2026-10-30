@@ -165,3 +165,4 @@ class FounderProfitShare(Base):
         "ProfitDistributionRun", back_populates="shares"
     )
     founder: Mapped["Founder"] = relationship("Founder", back_populates="profit_shares")
+

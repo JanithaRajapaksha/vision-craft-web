@@ -84,7 +84,7 @@ export default function DashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: `${selectedPartnerName.toLowerCase()}@workshop-os.local`,
+          email: `${selectedPartnerName.toLowerCase()}@visioncraft.lk`,
           password: "Password123!",
         }),
       });
@@ -94,7 +94,7 @@ export default function DashboardPage() {
         const fallback = await fetch("/api/v1/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: "janitha@workshop-os.local", password: "Password123!" }),
+          body: JSON.stringify({ email: "janitha@visioncraft.lk", password: "Password123!" }),
         });
         const tokenData = await fallback.json();
         localStorage.setItem("token", tokenData.access_token);
@@ -291,10 +291,10 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Workshop Operations & Financial Overview
+                VisionCraft Operations & Financial Overview
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                FDM 3D Printing • PCB Assembly • Engineering Services • Operating Currency: Sri Lankan Rupees (LKR)
+                VisionCraft • FDM 3D Printing • PCB Assembly • Engineering Services • Currency: Sri Lankan Rupees (LKR)
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -705,3 +705,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

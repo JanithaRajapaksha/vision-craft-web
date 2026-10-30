@@ -1,4 +1,4 @@
-"""Workshop OS Backend Main FastAPI Application."""
+"""VisionCraft OS Backend Main FastAPI Application."""
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,7 +15,7 @@ setup_logging()
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
-    description="Workshop OS – Complete Business Management System for Engineering & Manufacturing Operations",
+    description="VisionCraft OS – Complete Business Management System for Engineering & FDM Manufacturing Operations",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
@@ -56,3 +56,4 @@ async def health_check():
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(accounting_router, prefix="/api/v1")
 app.include_router(founders_router, prefix="/api/v1")
+

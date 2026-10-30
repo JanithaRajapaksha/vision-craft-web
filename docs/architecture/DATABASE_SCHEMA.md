@@ -1,6 +1,6 @@
-# Workshop OS – Database Entity Relationship & Schema Design
+# VisionCraft OS – Database Entity Relationship & Schema Design
 
-This document details the PostgreSQL relational schema for Workshop OS. All financial calculations use `NUMERIC(15, 2)` (or `NUMERIC(18, 4)` for high-precision rates), and primary keys use UUID v4 or sequential alphanumeric identifiers where user-facing (`QT-2026-0001`, `INV-2026-0001`, etc.).
+This document details the PostgreSQL relational schema for VisionCraft OS. All financial calculations use `NUMERIC(15, 2)` (or `NUMERIC(18, 4)` for high-precision rates), and primary keys use UUID v4 or sequential alphanumeric identifiers where user-facing (`QT-2026-0001`, `INV-2026-0001`, etc.).
 
 ---
 

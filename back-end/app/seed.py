@@ -75,28 +75,28 @@ STANDARD_COA = [
 PARTNERS = [
     {
         "name": "Janitha",
-        "email": "janitha@workshop-os.local",
+        "email": "janitha@visioncraft.lk",
         "capital_code": "3011",
         "drawings_code": "3021",
         "payable_code": "2051",
     },
     {
         "name": "Lalitha",
-        "email": "lalitha@workshop-os.local",
+        "email": "lalitha@visioncraft.lk",
         "capital_code": "3012",
         "drawings_code": "3022",
         "payable_code": "2052",
     },
     {
         "name": "Thakshila",
-        "email": "thakshila@workshop-os.local",
+        "email": "thakshila@visioncraft.lk",
         "capital_code": "3013",
         "drawings_code": "3023",
         "payable_code": "2053",
     },
     {
         "name": "Melanka",
-        "email": "melanka@workshop-os.local",
+        "email": "melanka@visioncraft.lk",
         "capital_code": "3014",
         "drawings_code": "3024",
         "payable_code": "2054",
@@ -131,10 +131,10 @@ async def seed_database():
                 account_map[code] = existing
 
         # 2. Seed Super Admin
-        admin_res = await session.execute(select(User).where(User.email == "admin@workshop-os.local"))
+        admin_res = await session.execute(select(User).where(User.email == "admin@visioncraft.lk"))
         if not admin_res.scalar_one_or_none():
             admin = User(
-                email="admin@workshop-os.local",
+                email="admin@visioncraft.lk",
                 password_hash=get_password_hash(DEFAULT_PASSWORD),
                 full_name="Super Administrator",
                 role=UserRole.SUPER_ADMIN.value,
@@ -174,3 +174,4 @@ async def seed_database():
 
 if __name__ == "__main__":
     asyncio.run(seed_database())
+

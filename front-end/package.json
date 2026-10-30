@@ -1,5 +1,5 @@
 {
-  "name": "workshop-os-frontend",
+  "name": "visioncraft-frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -27,3 +27,4 @@
     "typescript": "^5.5.4"
   }
 }
+

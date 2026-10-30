@@ -50,7 +50,7 @@ async def db_session():
 
         # Seed Admin
         admin = User(
-            email="admin@workshop-os.local",
+            email="admin@visioncraft.lk",
             password_hash=get_password_hash(DEFAULT_PASSWORD),
             full_name="Super Administrator",
             role=UserRole.SUPER_ADMIN.value,
@@ -97,3 +97,4 @@ async def async_client(db_session: AsyncSession):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
     app.dependency_overrides.clear()
+

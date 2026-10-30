@@ -13,7 +13,7 @@ def test_password_hashing():
 
 
 def test_jwt_token_generation_and_decoding():
-    data = {"sub": "user_uuid_123", "role": "FOUNDER", "email": "janitha@workshop-os.local"}
+    data = {"sub": "user_uuid_123", "role": "FOUNDER", "email": "janitha@visioncraft.lk"}
     token = create_access_token(data)
     assert isinstance(token, str)
 
@@ -21,20 +21,20 @@ def test_jwt_token_generation_and_decoding():
     assert decoded is not None
     assert decoded["sub"] == "user_uuid_123"
     assert decoded["role"] == "FOUNDER"
-    assert decoded["email"] == "janitha@workshop-os.local"
+    assert decoded["email"] == "janitha@visioncraft.lk"
 
 
 @pytest.mark.asyncio
 async def test_api_login_success(async_client: AsyncClient):
     response = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": "janitha@workshop-os.local", "password": "Password123!"},
+        json={"email": "janitha@visioncraft.lk", "password": "Password123!"},
     )
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
-    assert data["user"]["email"] == "janitha@workshop-os.local"
+    assert data["user"]["email"] == "janitha@visioncraft.lk"
     assert data["user"]["full_name"] == "Janitha"
     assert data["user"]["role"] == "FOUNDER"
 
@@ -43,7 +43,8 @@ async def test_api_login_success(async_client: AsyncClient):
 async def test_api_login_invalid_password(async_client: AsyncClient):
     response = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": "janitha@workshop-os.local", "password": "IncorrectPassword!"},
+        json={"email": "janitha@visioncraft.lk", "password": "IncorrectPassword!"},
     )
     assert response.status_code == 401
     assert "Invalid email or password" in response.json()["detail"]
+

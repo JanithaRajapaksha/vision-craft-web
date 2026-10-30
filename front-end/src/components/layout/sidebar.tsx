@@ -40,15 +40,15 @@ export function Sidebar({ onOpenQuickExpense }: SidebarProps) {
       <div>
         {/* Brand Header */}
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md">
-              W
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white shadow-md text-base tracking-wider">
+              V
             </div>
             <div>
-              <span className="font-semibold text-base tracking-tight text-white block leading-none">
-                Workshop OS
+              <span className="font-bold text-base tracking-tight text-white block leading-none">
+                VisionCraft
               </span>
-              <span className="text-xs text-slate-400 block mt-1">
+              <span className="text-[11px] text-blue-400 font-medium block mt-1">
                 Engineering & FDM
               </span>
             </div>
@@ -109,3 +109,4 @@ export function Sidebar({ onOpenQuickExpense }: SidebarProps) {
     </aside>
   );
 }
+

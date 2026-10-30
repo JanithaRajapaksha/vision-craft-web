@@ -15,13 +15,14 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v.lower() in ("true", "1", "t", "yes", "debug")
         return bool(v)
-    APP_NAME: str = "Workshop OS"
-    SECRET_KEY: str = "workshop-os-secure-secret-key-32-bytes-janitha-lalitha-thakshila-melanka"
+    APP_NAME: str = "VisionCraft OS"
+    COMPANY_NAME: str = "VisionCraft"
+    SECRET_KEY: str = "visioncraft-secure-secret-key-32-bytes-janitha-lalitha-thakshila-melanka"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
 
     # Database
-    DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parent.parent}/workshop_os.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parent.parent}/visioncraft.db"
 
     # Redis & Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
@@ -36,7 +37,7 @@ class Settings(BaseSettings):
     S3_ENDPOINT_URL: Optional[str] = None
     S3_ACCESS_KEY: Optional[str] = None
     S3_SECRET_KEY: Optional[str] = None
-    S3_BUCKET_NAME: Optional[str] = "workshop-os-assets"
+    S3_BUCKET_NAME: Optional[str] = "visioncraft-assets"
     S3_REGION: Optional[str] = "ap-south-1"
 
     # 3D Slicer Engine

@@ -15,3 +15,4 @@ def get_storage() -> StorageProvider:
         else:
             _storage_instance = LocalStorageProvider(settings.STORAGE_LOCAL_ROOT)
     return _storage_instance
+

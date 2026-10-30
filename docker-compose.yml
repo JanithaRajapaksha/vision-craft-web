@@ -3,25 +3,25 @@ version: "3.8"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: workshop_os_postgres
+    container_name: visioncraft_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: workshop_admin
-      POSTGRES_PASSWORD: workshop_secure_pass
-      POSTGRES_DB: workshop_os_db
+      POSTGRES_USER: visioncraft_admin
+      POSTGRES_PASSWORD: visioncraft_secure_pass
+      POSTGRES_DB: visioncraft_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U workshop_admin -d workshop_os_db"]
+      test: ["CMD-SHELL", "pg_isready -U visioncraft_admin -d visioncraft_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: workshop_os_redis
+    container_name: visioncraft_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -37,10 +37,10 @@ services:
     build:
       context: ./back-end
       dockerfile: Dockerfile
-    container_name: workshop_os_backend
+    container_name: visioncraft_backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+asyncpg://workshop_admin:workshop_secure_pass@postgres:5432/workshop_os_db
+      DATABASE_URL: postgresql+asyncpg://visioncraft_admin:visioncraft_secure_pass@postgres:5432/visioncraft_db
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       CELERY_TASK_ALWAYS_EAGER: "False"
@@ -60,11 +60,11 @@ services:
     build:
       context: ./back-end
       dockerfile: Dockerfile
-    container_name: workshop_os_worker
+    container_name: visioncraft_worker
     restart: unless-stopped
     command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "-Q", "slicing,pdf,default"]
     environment:
-      DATABASE_URL: postgresql+asyncpg://workshop_admin:workshop_secure_pass@postgres:5432/workshop_os_db
+      DATABASE_URL: postgresql+asyncpg://visioncraft_admin:visioncraft_secure_pass@postgres:5432/visioncraft_db
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       STORAGE_PROVIDER: local
@@ -81,7 +81,7 @@ services:
     build:
       context: ./front-end
       dockerfile: Dockerfile
-    container_name: workshop_os_frontend
+    container_name: visioncraft_frontend
     restart: unless-stopped
     ports:
       - "3000:3000"

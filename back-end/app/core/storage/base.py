@@ -27,3 +27,4 @@ class StorageProvider(ABC):
     def get_url(self, relative_path: str) -> str:
         """Get publicly accessible or internal download URL for the file."""
         pass
+

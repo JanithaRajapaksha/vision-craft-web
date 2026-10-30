@@ -55,3 +55,4 @@ export function Header({ currentPartner, onPartnerChange }: HeaderProps) {
     </header>
   );
 }
+

@@ -50,3 +50,4 @@ async def get_my_profile(
 ):
     """Get the currently authenticated user's profile."""
     return UserResponse.model_validate(current_user)
+

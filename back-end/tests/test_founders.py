@@ -10,7 +10,7 @@ async def test_list_all_four_founders_with_zero_balances(async_client: AsyncClie
     # Log in as Janitha
     login_resp = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": "janitha@workshop-os.local", "password": "Password123!"},
+        json={"email": "janitha@visioncraft.lk", "password": "Password123!"},
     )
     assert login_resp.status_code == 200
     token = login_resp.json()["access_token"]
@@ -41,7 +41,7 @@ async def test_founder_personal_expense_and_reimbursement_lifecycle(async_client
     # Log in as Thakshila
     login_resp = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": "thakshila@workshop-os.local", "password": "Password123!"},
+        json={"email": "thakshila@visioncraft.lk", "password": "Password123!"},
     )
     token = login_resp.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}

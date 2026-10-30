@@ -1,12 +1,12 @@
-# Workshop OS – 3D Slicer Integration & Cost Estimation Engine
+# VisionCraft OS – 3D Slicer Integration & Cost Estimation Engine
 
-This document specifies the technical architecture for integrating command-line slicers (**PrusaSlicer** and **OrcaSlicer**) asynchronously into Workshop OS, parsing print telemetry from generated G-code, and executing multi-factor price estimation formulas in Sri Lankan Rupees (LKR).
+This document specifies the technical architecture for integrating command-line slicers (**PrusaSlicer** and **OrcaSlicer**) asynchronously into VisionCraft OS, parsing print telemetry from generated G-code, and executing multi-factor price estimation formulas in Sri Lankan Rupees (LKR).
 
 ---
 
 ## 1. Asynchronous Slicing Architecture
 
-3D slicing can consume substantial CPU and RAM (e.g. slicing complex organic meshes with tree supports may take 20 to 90 seconds). Workshop OS offloads all slicing tasks from web worker threads to **Celery background workers** backed by Redis.
+3D slicing can consume substantial CPU and RAM (e.g. slicing complex organic meshes with tree supports may take 20 to 90 seconds). VisionCraft OS offloads all slicing tasks from web worker threads to **Celery background workers** backed by Redis.
 
 ```mermaid
 flowchart TD

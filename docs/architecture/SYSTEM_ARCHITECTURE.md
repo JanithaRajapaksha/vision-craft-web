@@ -1,8 +1,9 @@
-# Workshop OS – Complete Business Management System
+# VisionCraft OS – Complete Business Management System
 ## System Architecture & Technical Specification
 
-**Target Platform:** Engineering & Manufacturing Business (3D Printing, PCB Fabrication, Electronics Prototyping, Engineering Services)  
-**Founders:** 4 Co-Founders  
+**Company:** VisionCraft  
+**Target Platform:** Engineering & Manufacturing Business (FDM 3D Printing, PCB Fabrication, Electronics Prototyping, Engineering Services)  
+**Founders:** 4 Co-Founders (Janitha, Lalitha, Thakshila, Melanka)  
 **Primary Currency:** Sri Lankan Rupees (LKR)  
 **Architecture Pattern:** Modular Monolith with Domain-Driven Boundaries, Event-Driven Background Processing, and Double-Entry Ledger  
 
@@ -19,14 +20,14 @@ A comprehensive inspection of the host environment `/home/janitha/vision-craft-w
   - **Node.js:** `v20.20.2` LTS with npm `10.8.2` (Ideal for Next.js 14/15 App Router, React 19/18, TypeScript, Tailwind CSS)
   - **Version Control:** Git 2.34.1
 - **Existing Workspace Layout:**
-  - `back-end/` (Present, clean)
-  - `front-end/` (Present, clean)
+  - `back-end/` (Active modular API)
+  - `front-end/` (Active Next.js dashboard)
 
 ---
 
 ## 2. High-Level System Architecture
 
-Workshop OS is designed as a **Modular Monolith** with clean domain separation. Rather than distributing business domains across microservices—which introduces complex 2-phase commits, network latency, and distributed financial reconciliation risks—a modular monolith ensures **strict ACID transactional integrity** across quotations, inventory consumption, invoices, and the double-entry ledger.
+VisionCraft OS is designed as a **Modular Monolith** with clean domain separation. Rather than distributing business domains across microservices—which introduces complex 2-phase commits, network latency, and distributed financial reconciliation risks—a modular monolith ensures **strict ACID transactional integrity** across quotations, inventory consumption, invoices, and the double-entry ledger.
 
 ```mermaid
 flowchart TB

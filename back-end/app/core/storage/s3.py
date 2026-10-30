@@ -27,3 +27,4 @@ class S3StorageProvider(StorageProvider):
 
     def get_url(self, relative_path: str) -> str:
         return f"{self.endpoint_url}/{self.bucket_name}/{relative_path.lstrip('/')}"
+

@@ -1,6 +1,6 @@
-# Workshop OS – Complete Business Management System
+# VisionCraft OS – Complete Business Management System
 
-A production-grade, modular business management platform and centralized operating system built for engineering and manufacturing operations (FDM 3D printing, PCB design, PCB fabrication & assembly, electronics prototyping, and custom engineering projects). Operated by 4 co-founders with accounting in Sri Lankan Rupees (LKR).
+A production-grade, modular business management platform and centralized operating system built for **VisionCraft** engineering and manufacturing operations (FDM 3D printing, PCB design, PCB fabrication & assembly, electronics prototyping, and custom engineering projects). Operated by 4 co-founders (Janitha, Lalitha, Thakshila, Melanka) with accounting in Sri Lankan Rupees (LKR).
 
 ---
 

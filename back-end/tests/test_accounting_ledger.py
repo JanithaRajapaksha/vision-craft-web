@@ -106,3 +106,4 @@ async def test_ledger_compensatory_reversal(db_session: AsyncSession):
     # Balances are restored precisely back to 0.00!
     assert expense.current_balance == Decimal("0.00")
     assert bank.current_balance == Decimal("0.00")
+
