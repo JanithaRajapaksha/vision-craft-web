@@ -68,3 +68,4 @@ celerybeat.pid
 *.swp
 *.swo
 
+lalitha_web/

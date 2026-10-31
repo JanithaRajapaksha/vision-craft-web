@@ -44,6 +44,10 @@ async def lifespan(app: FastAPI):
                     sync_conn.execute(text("ALTER TABLE orders ADD COLUMN payment_collected_by VARCHAR(100)"))
                 if "paid_at" not in cols:
                     sync_conn.execute(text("ALTER TABLE orders ADD COLUMN paid_at TIMESTAMP"))
+            if "users" in inspector.get_table_names():
+                cols = [c["name"] for c in inspector.get_columns("users")]
+                if "phone" not in cols:
+                    sync_conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(50)"))
         await conn.run_sync(_migrate_columns)
     try:
         from app.seed import seed_database

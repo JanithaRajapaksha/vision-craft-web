@@ -9,10 +9,18 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    phone: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str
+    phone: Optional[str] = None
     role: str
     is_active: bool
     created_at: datetime

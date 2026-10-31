@@ -112,3 +112,65 @@ async def test_create_quotation_and_order_from_sliced_stl(async_client: AsyncCli
     assert orders_list.status_code == 200
     assert len(orders_list.json()) >= 1
 
+
+@pytest.mark.asyncio
+async def test_customer_portal_isolation(async_client: AsyncClient):
+    # 1. Register customer A
+    reg_a = await async_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "customer_a@example.com",
+            "password": "Password123!",
+            "full_name": "Customer Alpha",
+            "phone": "+94711111111",
+        },
+    )
+    assert reg_a.status_code == 201
+    token_a = reg_a.json()["access_token"]
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+
+    # 2. Register customer B
+    reg_b = await async_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "customer_b@example.com",
+            "password": "Password123!",
+            "full_name": "Customer Beta",
+            "phone": "+94722222222",
+        },
+    )
+    assert reg_b.status_code == 201
+    token_b = reg_b.json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    # 3. Customer A submits a quotation request
+    req_res = await async_client.post(
+        "/api/v1/commercial/customer-request",
+        json={
+            "service_type": "3D_PRINTING",
+            "title": "Drone Propeller Guard Prototype",
+            "description": "Black PETG, 4 pieces required with 40% infill.",
+            "quantity": 4,
+        },
+        headers=headers_a,
+    )
+    assert req_res.status_code == 201
+    quote_a = req_res.json()
+    assert quote_a["customer_email"] == "customer_a@example.com"
+    quote_a_id = quote_a["id"]
+
+    # 4. Customer A checks my-quotations -> sees 1 quote
+    my_quotes_a = await async_client.get("/api/v1/commercial/my-quotations", headers=headers_a)
+    assert my_quotes_a.status_code == 200
+    assert any(q["id"] == quote_a_id for q in my_quotes_a.json())
+
+    # 5. Customer B checks my-quotations -> sees 0 quotes (strictly isolated!)
+    my_quotes_b = await async_client.get("/api/v1/commercial/my-quotations", headers=headers_b)
+    assert my_quotes_b.status_code == 200
+    assert not any(q["id"] == quote_a_id for q in my_quotes_b.json())
+
+    # 6. Customer B tries to view Customer A's quote directly -> 403 Forbidden!
+    forbidden_res = await async_client.get(f"/api/v1/commercial/quotations/{quote_a_id}", headers=headers_b)
+    assert forbidden_res.status_code == 403
+
+

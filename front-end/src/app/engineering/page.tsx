@@ -47,6 +47,12 @@ interface PCBAnalysis {
   drills: DrillHoleData[];
   top_pads: PadData[];
   bottom_pads: PadData[];
+  top_layer_image_base64?: string;
+  bottom_layer_image_base64?: string;
+  outline_layer_image_base64?: string;
+  drill_layer_image_base64?: string;
+  drill_drawing_layer_image_base64?: string;
+  slot_count?: number;
 }
 
 interface QuotationItem {
@@ -536,6 +542,12 @@ export default function EngineeringPCBPage() {
                   drills={analysis.drills}
                   topPads={analysis.top_pads}
                   bottomPads={analysis.bottom_pads}
+                  topLayerImageBase64={analysis.top_layer_image_base64}
+                  bottomLayerImageBase64={analysis.bottom_layer_image_base64}
+                  outlineLayerImageBase64={analysis.outline_layer_image_base64}
+                  drillLayerImageBase64={analysis.drill_layer_image_base64}
+                  drillDrawingLayerImageBase64={analysis.drill_drawing_layer_image_base64}
+                  slotCount={analysis.slot_count}
                   className="w-full h-full"
                 />
               ) : (
@@ -790,10 +802,10 @@ export default function EngineeringPCBPage() {
 
                     <div className="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60">
                       <span className="text-[10px] text-slate-400 block font-medium">
-                        Plated Holes (Drills)
+                        Drills & Slots
                       </span>
                       <span className="font-mono font-bold text-emerald-400 text-sm">
-                        {analysis.hole_count} holes
+                        {analysis.hole_count} holes {analysis.slot_count && analysis.slot_count > 0 ? `(${analysis.slot_count} slots)` : ""}
                       </span>
                     </div>
 

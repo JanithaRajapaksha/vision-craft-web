@@ -15,21 +15,22 @@ import {
   Activity,
   ShoppingBag,
   Server,
+  Globe,
+  UserCheck,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { clearAuthSession } from "@/lib/auth";
 
 const navigation = [
-  { name: "Executive Dashboard", href: "/", icon: Activity },
+  { name: "Executive Dashboard", href: "/admin", icon: Activity },
   { name: "3D Printing (FDM)", href: "/3d-printing", icon: Layers },
   { name: "Orders & Queue", href: "/orders", icon: ShoppingBag },
   { name: "PCB & Engineering", href: "/engineering", icon: Cpu },
-  { name: "Customer CRM", href: "/customers", icon: Users },
-  { name: "Quotations", href: "/quotations", icon: FileText },
-  { name: "Projects & Production", href: "/projects", icon: Briefcase },
-  { name: "Inventory & Stock", href: "/inventory", icon: Boxes },
-  { name: "Double-Entry Ledger", href: "/accounting", icon: BookOpen },
-  { name: "4 Partners Hub", href: "/founders", icon: DollarSign },
+  { name: "Double-Entry Ledger", href: "/admin", icon: BookOpen },
+  { name: "Customer Portal", href: "/portal", icon: UserCheck },
   { name: "System & Resources", href: "/system", icon: Server },
+  { name: "Public Homepage", href: "/", icon: Globe },
 ];
 
 interface SidebarProps {
@@ -109,6 +110,16 @@ export function Sidebar({ onOpenQuickExpense }: SidebarProps) {
             Currency: LKR (Rs.)
           </div>
         </div>
+        <button
+          onClick={() => {
+            clearAuthSession();
+            window.location.href = "/login";
+          }}
+          className="mt-3 w-full flex items-center justify-center space-x-2 py-1.5 px-3 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded transition border border-rose-900/30"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

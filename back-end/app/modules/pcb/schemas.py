@@ -35,6 +35,12 @@ class PCBAnalysisResponse(BaseModel):
     drills: List[DrillHole] = Field(default_factory=list)
     top_pads: List[CopperPad] = Field(default_factory=list)
     bottom_pads: List[CopperPad] = Field(default_factory=list)
+    top_layer_image_base64: Optional[str] = None
+    bottom_layer_image_base64: Optional[str] = None
+    outline_layer_image_base64: Optional[str] = None
+    drill_layer_image_base64: Optional[str] = None
+    drill_drawing_layer_image_base64: Optional[str] = None
+    slot_count: Optional[int] = 0
 
 
 class PCBQuotationRequest(BaseModel):

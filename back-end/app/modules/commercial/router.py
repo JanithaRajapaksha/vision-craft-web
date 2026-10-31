@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.modules.auth.models import User
+from app.modules.auth.models import User, UserRole
 from app.modules.printing_3d.models import SlicingJob, CadModel
 from app.modules.commercial.models import (
     Quotation,
@@ -22,6 +22,7 @@ from app.modules.commercial.models import (
 from app.modules.commercial.schemas import (
     CreateQuoteFromSliceRequest,
     CreateOrderFromSliceRequest,
+    CreateCustomerInquiryRequest,
     RecordPaymentRequest,
     UpdateOrderStatusRequest,
     QuotationResponse,
@@ -182,6 +183,86 @@ async def create_order_from_slice(
     return order
 
 
+@router.get("/my-quotations", response_model=List[QuotationResponse])
+async def list_my_quotations(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Retrieve all quotations requested by or addressed to the currently authenticated customer."""
+    query = (
+        select(Quotation)
+        .options(selectinload(Quotation.items))
+        .where(Quotation.customer_email == current_user.email)
+        .order_by(desc(Quotation.created_at))
+    )
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+@router.get("/my-orders", response_model=List[OrderResponse])
+async def list_my_orders(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Retrieve all production orders associated with the currently authenticated customer."""
+    query = (
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(Order.customer_email == current_user.email)
+        .order_by(desc(Order.created_at))
+    )
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+@router.post("/customer-request", response_model=QuotationResponse, status_code=status.HTTP_201_CREATED)
+async def submit_customer_request(
+    payload: CreateCustomerInquiryRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Submit a custom service quotation inquiry as an authenticated customer."""
+    quote_number = await get_next_quotation_number(db)
+    now = datetime.now(timezone.utc)
+    valid_until = now + timedelta(days=14)
+
+    quotation = Quotation(
+        id=str(uuid.uuid4()),
+        quotation_number=quote_number,
+        customer_name=current_user.full_name,
+        customer_phone=payload.customer_phone or current_user.phone,
+        customer_email=current_user.email,
+        status=QuotationStatus.DRAFT.value,
+        subtotal_lkr=Decimal("0.00"),
+        discount_lkr=Decimal("0.00"),
+        total_amount_lkr=Decimal("0.00"),
+        valid_until=valid_until,
+        notes=payload.notes,
+        created_by_partner="Customer Portal",
+        created_at=now,
+    )
+    db.add(quotation)
+    await db.flush()
+
+    item = QuotationItem(
+        id=str(uuid.uuid4()),
+        quotation_id=quotation.id,
+        title=f"[{payload.service_type}] {payload.title}",
+        description=payload.description or f"Customer quotation request for {payload.service_type}",
+        material=payload.service_type,
+        layer_height_mm=Decimal("0.20"),
+        filament_grams=Decimal("0.00"),
+        estimated_hours=Decimal("0.00"),
+        quantity=payload.quantity,
+        unit_price_lkr=Decimal("0.00"),
+        total_price_lkr=Decimal("0.00"),
+    )
+    db.add(item)
+    await db.commit()
+    await db.refresh(quotation)
+    return quotation
+
+
 @router.get("/quotations", response_model=List[QuotationResponse])
 async def list_quotations(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -191,9 +272,12 @@ async def list_quotations(
     query = (
         select(Quotation)
         .options(selectinload(Quotation.items))
-        .order_by(desc(Quotation.created_at))
-        .limit(limit)
     )
+    # Customers only see their own records
+    if current_user.role == UserRole.CUSTOMER.value:
+        query = query.where(Quotation.customer_email == current_user.email)
+
+    query = query.order_by(desc(Quotation.created_at)).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -216,6 +300,12 @@ async def get_quotation_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Quotation not found.",
         )
+    # Ensure customer cannot view other customers' quotes
+    if current_user.role == UserRole.CUSTOMER.value and quote.customer_email != current_user.email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: you do not have permission to view this quotation.",
+        )
     return quote
 
 
@@ -228,9 +318,12 @@ async def list_orders(
     query = (
         select(Order)
         .options(selectinload(Order.items))
-        .order_by(desc(Order.created_at))
-        .limit(limit)
     )
+    # Customers only see their own orders
+    if current_user.role == UserRole.CUSTOMER.value:
+        query = query.where(Order.customer_email == current_user.email)
+
+    query = query.order_by(desc(Order.created_at)).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 

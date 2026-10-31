@@ -87,3 +87,44 @@ async def test_malformed_token_rejected_with_401(async_client: AsyncClient):
     assert res.status_code == 401
 
 
+@pytest.mark.asyncio
+async def test_customer_registration_and_login(async_client: AsyncClient):
+    # Register customer
+    reg_res = await async_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "customer@example.com",
+            "password": "Password123!",
+            "full_name": "Test Customer",
+            "phone": "+94771234567",
+        },
+    )
+    assert reg_res.status_code == 201
+    reg_data = reg_res.json()
+    assert reg_data["user"]["email"] == "customer@example.com"
+    assert reg_data["user"]["role"] == "CUSTOMER"
+    assert reg_data["user"]["full_name"] == "Test Customer"
+    assert "access_token" in reg_data
+
+    # Login customer
+    login_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": "customer@example.com", "password": "Password123!"},
+    )
+    assert login_res.status_code == 200
+    login_data = login_res.json()
+    assert login_data["user"]["role"] == "CUSTOMER"
+
+    # Duplicate registration rejected
+    dup_res = await async_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "customer@example.com",
+            "password": "AnotherPassword!",
+            "full_name": "Duplicate User",
+        },
+    )
+    assert dup_res.status_code == 400
+
+
+

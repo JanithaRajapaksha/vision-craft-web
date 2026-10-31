@@ -118,6 +118,12 @@ async def upload_and_analyze_pcb(
         drills=[DrillHole(**d) for d in analysis["drills"]],
         top_pads=[CopperPad(**p) for p in analysis["top_pads"]],
         bottom_pads=[CopperPad(**p) for p in analysis["bottom_pads"]],
+        top_layer_image_base64=analysis.get("top_layer_image_base64"),
+        bottom_layer_image_base64=analysis.get("bottom_layer_image_base64"),
+        outline_layer_image_base64=analysis.get("outline_layer_image_base64"),
+        drill_layer_image_base64=analysis.get("drill_layer_image_base64"),
+        drill_drawing_layer_image_base64=analysis.get("drill_drawing_layer_image_base64"),
+        slot_count=analysis.get("slot_count", 0),
     )
 
 
@@ -155,6 +161,12 @@ async def generate_and_analyze_sample_board(
         drills=[DrillHole(**d) for d in analysis["drills"]],
         top_pads=[CopperPad(**p) for p in analysis["top_pads"]],
         bottom_pads=[CopperPad(**p) for p in analysis["bottom_pads"]],
+        top_layer_image_base64=analysis.get("top_layer_image_base64"),
+        bottom_layer_image_base64=analysis.get("bottom_layer_image_base64"),
+        outline_layer_image_base64=analysis.get("outline_layer_image_base64"),
+        drill_layer_image_base64=analysis.get("drill_layer_image_base64"),
+        drill_drawing_layer_image_base64=analysis.get("drill_drawing_layer_image_base64"),
+        slot_count=analysis.get("slot_count", 0),
     )
 
 

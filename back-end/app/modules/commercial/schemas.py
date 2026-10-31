@@ -29,6 +29,15 @@ class CreateOrderFromSliceRequest(BaseModel):
     payment_method: Optional[str] = None
 
 
+class CreateCustomerInquiryRequest(BaseModel):
+    service_type: str = "3D_PRINTING"  # 3D_PRINTING, PCB_DESIGN, CUSTOM_ENCLOSURE, ELECTRONICS, CAD_MODEL
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    quantity: int = Field(default=1, ge=1, le=10000)
+    customer_phone: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class RecordPaymentRequest(BaseModel):
     payment_status: str = Field(default="PAID", description="UNPAID, PARTIALLY_PAID, PAID")
     paid_amount_lkr: Optional[Decimal] = None
