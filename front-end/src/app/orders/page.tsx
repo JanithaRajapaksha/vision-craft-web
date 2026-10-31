@@ -12,6 +12,7 @@ import {
   AlertCircle,
   RotateCw,
   Layers,
+  Cpu,
   Phone,
   User as UserIcon,
   Search,
@@ -500,16 +501,25 @@ export default function OrdersPage() {
               <h3 className="font-bold text-sm text-slate-800">No Orders Found</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                 {orders.length === 0
-                  ? "You haven't queued any 3D print orders yet. Slice an STL model in the studio and click 'Add to Order'."
+                  ? "You haven't queued any production orders yet. Slice an STL model in 3D Printing or upload a Gerber PCB to click 'Add to Order'."
                   : "No orders match your active filter."}
               </p>
-              <Link
-                href="/3d-printing"
-                className="mt-4 inline-flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Go to 3D Printing Studio</span>
-              </Link>
+              <div className="mt-4 flex items-center justify-center space-x-2">
+                <Link
+                  href="/3d-printing"
+                  className="inline-flex items-center space-x-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>3D Printing Studio</span>
+                </Link>
+                <Link
+                  href="/engineering"
+                  className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-blue-400" />
+                  <span>PCB Studio</span>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

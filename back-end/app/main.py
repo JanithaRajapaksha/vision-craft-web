@@ -11,6 +11,9 @@ from app.modules.accounting.router import router as accounting_router
 from app.modules.founders.router import router as founders_router
 from app.modules.printing_3d.router import router as printing_3d_router
 from app.modules.commercial.router import router as commercial_router
+from app.modules.pcb.router import router as pcb_router
+from app.modules.system.router import router as system_router
+from app.modules.system.middleware import ResourceProfilingMiddleware
 from app.core.database import engine, Base
 import app.modules.printing_3d.models
 import app.modules.commercial.models
@@ -71,6 +74,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Real-time resource profiling and telemetry middleware
+app.add_middleware(ResourceProfilingMiddleware)
+
 
 @app.exception_handler(DomainException)
 async def domain_exception_handler(request: Request, exc: DomainException):
@@ -97,4 +103,6 @@ app.include_router(accounting_router, prefix="/api/v1")
 app.include_router(founders_router, prefix="/api/v1")
 app.include_router(printing_3d_router, prefix="/api/v1")
 app.include_router(commercial_router, prefix="/api/v1")
+app.include_router(pcb_router, prefix="/api/v1")
+app.include_router(system_router, prefix="/api/v1")
 

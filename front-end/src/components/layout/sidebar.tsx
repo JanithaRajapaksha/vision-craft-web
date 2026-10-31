@@ -14,6 +14,7 @@ import {
   PlusCircle,
   Activity,
   ShoppingBag,
+  Server,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Inventory & Stock", href: "/inventory", icon: Boxes },
   { name: "Double-Entry Ledger", href: "/accounting", icon: BookOpen },
   { name: "4 Partners Hub", href: "/founders", icon: DollarSign },
+  { name: "System & Resources", href: "/system", icon: Server },
 ];
 
 interface SidebarProps {
